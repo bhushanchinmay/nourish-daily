@@ -4,7 +4,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Smart meal planning and nutrition tracking app with Ayurvedic principles">
+    <meta name="theme-color" content="#34C759">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Nourish">
+
     <title>Nourish Daily</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,13 +26,13 @@
     <div class="app-container">
         <header>
             <div class="logo">🌿 Nourish Daily</div>
-            <div style="display: flex; gap: 8px; align-items: center;">
-                <button id="theme-toggle" class="nav-btn" title="Toggle Dark Mode" style="padding: 6px;">🌙</button>
+            <div class="header-actions">
+                <button id="theme-toggle" class="theme-toggle" title="Toggle Dark Mode">🌙</button>
                 <div id="date-display" class="date-tag">Today</div>
             </div>
         </header>
 
-        <!-- Simplified Navigation: 4 tabs -->
+        <!-- Navigation -->
         <nav class="main-nav">
             <button class="nav-btn active" data-tab="today">Today</button>
             <button class="nav-btn" data-tab="weekly">Weekly</button>
@@ -36,8 +47,8 @@
                 <p id="current-focus">Focus: Dinner</p>
             </div>
 
-            <button id="customize-btn" class="customize-btn">
-                ✏️ Customize Meals
+            <button id="customize-btn" class="action-btn">
+                <span>✏️</span> Customize Today's Meals
             </button>
 
             <section class="meal-timeline">
@@ -69,147 +80,168 @@
                 </div>
             </section>
 
-            <!-- Snack (Time-based) -->
-            <section class="snack-section">
-                <h3 id="snack-header">🍿 Snack Suggestion</h3>
-                <div id="snack-card" class="snack-card">
-                    <p class="snack-title">Loading...</p>
-                    <small class="snack-desc">...</small>
-                </div>
-            </section>
+            <!-- Snack -->
+            <h3 class="section-title" id="snack-header">🍿 Snack Suggestion</h3>
+            <div id="snack-card" class="snack-card">
+                <p class="snack-title">Loading...</p>
+                <small class="snack-desc">...</small>
+            </div>
 
-            <!-- Quick Bites for emergencies -->
-            <section class="quick-section" id="quick-section">
-                <h3 id="quick-title">🆘 Hungry Now?</h3>
-                <div id="quick-list" class="quick-list"></div>
-            </section>
+            <!-- Quick Bites -->
+            <h3 class="section-title" id="quick-title">🆘 Hungry Now?</h3>
+            <div id="quick-list" class="quick-list"></div>
         </main>
 
         <!-- ===== WEEKLY TAB ===== -->
         <main id="weekly" class="tab-content">
-            <div class="section-header">
-                <h2>📅 Weekly Plan</h2>
+            <div class="hero-card">
+                <h1>Weekly Plan</h1>
+                <p>Overview of your week</p>
             </div>
-            <div id="weekly-container" class="weekly-grid"></div>
+            <div id="weekly-container" class="weekly-container"></div>
         </main>
 
-        <!-- ===== PREPARE TAB (Merged: Prep + Essentials + Groceries) ===== -->
+        <!-- ===== PREPARE TAB ===== -->
         <main id="prepare" class="tab-content">
-            <div class="section-header">
-                <h2>📋 Prepare for Tomorrow</h2>
-                <p id="prep-label">Friday's prep</p>
+            <div class="hero-card">
+                <h1>Prepare</h1>
+                <p id="prep-label">For Tomorrow</p>
             </div>
 
-            <div class="prep-group">
-                <h4>🌙 Night Tasks</h4>
-                <div id="prep-tasks" class="checklist"></div>
-            </div>
+            <h3 class="section-title">🌙 Night Tasks</h3>
+            <div id="prep-tasks" class="checklist"></div>
 
-            <div class="prep-group">
-                <h4>🛒 Groceries Needed</h4>
-                <div id="prep-groceries" class="checklist"></div>
-            </div>
+            <h3 class="section-title">🛒 Groceries Needed</h3>
+            <div id="prep-groceries" class="checklist"></div>
 
-            <div class="prep-group">
-                <h4>✅ Daily Essentials</h4>
-                <div id="prep-essentials" class="checklist"></div>
-            </div>
+            <h3 class="section-title">✅ Daily Essentials</h3>
+            <div id="prep-essentials" class="checklist"></div>
 
-            <div class="prep-group" id="custom-ingredients-group" style="display:none">
-                <h4>📝 Custom Ingredients</h4>
+            <div id="custom-ingredients-group" style="display:none">
+                <h3 class="section-title">📝 Custom Ingredients</h3>
                 <div id="prep-custom" class="checklist"></div>
             </div>
         </main>
 
         <!-- ===== RECIPES TAB ===== -->
         <main id="recipes" class="tab-content">
-            <div class="section-header">
-                <h2>📖 Recipes & Diets</h2>
+            <div class="hero-card">
+                <h1>Recipes</h1>
+                <p>Diets & Instructions</p>
             </div>
             <div id="recipe-list" class="recipe-grid"></div>
-            <button id="add-recipe-btn" class="add-recipe-btn">+ Add Recipe</button>
         </main>
     </div>
 
-    <!-- ===== CUSTOMIZE MODAL (Tabbed) ===== -->
+    <!-- ===== CUSTOMIZE MODAL ===== -->
     <div id="customize-modal" class="modal hidden">
-        <div class="modal-box modal-lg">
-            <div class="modal-head">
+        <div class="modal-box">
+            <div class="modal-header">
                 <h2>Customize Today</h2>
-                <button class="modal-x" data-close="customize-modal">✕</button>
+                <button class="modal-close" data-close="customize-modal">✕</button>
             </div>
-            <div class="modal-tabs">
-                <button class="tab-btn active" data-meal="breakfast">🌅 Breakfast</button>
-                <button class="tab-btn" data-meal="lunch">🍱 Lunch</button>
-                <button class="tab-btn" data-meal="dinner">🌙 Dinner</button>
+
+            <div class="toggle-group modal-tabs">
+                <div class="toggle-option tab-btn active" data-meal="breakfast">Breakfast</div>
+                <div class="toggle-option tab-btn" data-meal="lunch">Lunch</div>
+                <div class="toggle-option tab-btn" data-meal="dinner">Dinner</div>
             </div>
-            <div class="modal-body">
+
+            <div class="modal-body" style="flex: 1; overflow-y: auto;">
                 <div id="options-breakfast" class="options-panel active"></div>
                 <div id="options-lunch" class="options-panel"></div>
                 <div id="options-dinner" class="options-panel"></div>
             </div>
-            <div class="modal-foot">
-                <button class="btn-outline" id="reset-btn">Reset</button>
-                <button class="btn-fill" id="save-btn">Save</button>
+
+            <div class="modal-footer">
+                <button class="btn-secondary" id="reset-btn">Reset</button>
+                <button class="btn-primary" id="save-btn">Save Changes</button>
             </div>
         </div>
     </div>
 
-    <!-- ===== ADD ITEM MODAL (For Meals & Recipes) ===== -->
+    <!-- ===== ADD NEW MODAL ===== -->
     <div id="add-modal" class="modal hidden">
         <div class="modal-box">
-            <div class="modal-head">
+            <div class="modal-header">
                 <h2 id="add-modal-title">Add New</h2>
-                <button class="modal-x" data-close="add-modal">✕</button>
+                <button class="modal-close" data-close="add-modal">✕</button>
             </div>
-            <div class="modal-body">
-                <form id="add-form">
-                    <input type="hidden" id="add-type" value="meal">
 
-                    <label>Name *</label>
-                    <input type="text" id="add-name" required placeholder="e.g., Paneer Tikka">
+            <div style="flex: 1; overflow-y: auto;">
+                <form id="add-form" onsubmit="return false;">
+                    <label>Name</label>
+                    <input type="text" id="add-name" placeholder="e.g., Paneer Tikka">
 
                     <label>Description</label>
                     <textarea id="add-desc" rows="2" placeholder="Short notes..."></textarea>
 
-                    <!-- For Meals: type selector -->
+                    <!-- Diet-Friendly Toggle -->
+                    <div style="margin-bottom: 16px;">
+                        <label>Is this a diet-friendly meal/recipe? 🥗</label>
+                        <div class="toggle-group" id="diet-toggle-group">
+                            <div class="toggle-option diet-option" data-value="no">No</div>
+                            <div class="toggle-option diet-option" data-value="yes">Yes</div>
+                        </div>
+                    </div>
+
+                    <!-- Meal Type Selector -->
                     <div id="meal-type-group">
-                        <label>Meal Type *</label>
-                        <div class="btn-group">
-                            <button type="button" class="type-btn" data-value="breakfast">🌅 Breakfast</button>
-                            <button type="button" class="type-btn" data-value="lunch">🍱 Lunch</button>
-                            <button type="button" class="type-btn" data-value="dinner">🌙 Dinner</button>
+                        <label>For which meal?</label>
+                        <div class="toggle-group">
+                            <div class="toggle-option type-btn" data-value="breakfast">Breakfast</div>
+                            <div class="toggle-option type-btn" data-value="lunch">Lunch</div>
+                            <div class="toggle-option type-btn" data-value="dinner">Dinner</div>
                         </div>
                     </div>
 
-                    <!-- For Recipes: full content -->
+                    <!-- Recipe Content -->
                     <div id="recipe-content-group" style="display:none">
-                        <label>Recipe Steps</label>
-                        <textarea id="add-content" rows="4" placeholder="Ingredients and method..."></textarea>
+                        <label>Ingredients & Method</label>
+                        <textarea id="add-content" rows="4" placeholder="Full recipe steps..."></textarea>
                     </div>
 
-                    <!-- Ingredients for grocery list -->
+                    <!-- Ingredients -->
                     <div id="ingredients-group">
-                        <label>Special Ingredients? <small>(for grocery list)</small></label>
-                        <div id="ingredients-inputs">
-                            <input type="text" class="ing-input" placeholder="Ingredient 1">
-                        </div>
-                        <button type="button" id="add-ing-btn" class="btn-link">+ Add more (max 5)</button>
+                        <label>Special Ingredients (for grocery list)</label>
+
+                        <button type="button" id="show-ing-btn" class="action-btn"
+                            style="padding:10px; margin-bottom:10px; background:var(--bg-secondary); color:var(--text-primary); margin-top: 5px;">
+                            + Add Ingredients
+                        </button>
+
+                        <div id="ingredients-inputs" class="hidden"></div>
+                        <button type="button" id="add-ing-btn" class="hidden"
+                            style="color:var(--tint-secondary); border:none; background:none; font-weight:600; padding:8px 0; cursor:pointer;">+
+                            Add Another</button>
                     </div>
                 </form>
             </div>
-            <div class="modal-foot">
-                <button class="btn-outline" data-close="add-modal">Cancel</button>
-                <button class="btn-fill" id="submit-add">Save</button>
+
+            <div class="modal-footer">
+                <button class="btn-secondary" data-close="add-modal">Cancel</button>
+                <button class="btn-primary" id="submit-add">Save</button>
             </div>
         </div>
     </div>
 
-    <!-- FAB Button -->
-    <button id="fab" class="fab" title="Add Meal or Recipe">+</button>
+    <!-- FAB -->
+    <button id="fab" class="fab" title="Add New">+</button>
 
+    <script src="config.js"></script>
     <script src="data.js"></script>
     <script src="script.js"></script>
+
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/nourish-daily/sw.js')
+                    .then(registration => console.log('SW registered:', registration.scope))
+                    .catch(err => console.log('SW registration failed:', err));
+            });
+        }
+    </script>
 </body>
 
 </html>

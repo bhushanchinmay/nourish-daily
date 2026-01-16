@@ -1,7 +1,3 @@
-// ============================================
-// NOURISH DAILY - MAIN SCRIPT
-// ============================================
-
 document.addEventListener('DOMContentLoaded', () => {
     // ---------- CONSTANTS ----------
     const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
@@ -53,25 +49,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ---------- TODAY TAB ----------
     function initToday() {
-        // Date
         document.getElementById('date-display').textContent =
             today.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
-        // Greeting
         let greeting = "Good Morning!";
         if (hour >= 12) greeting = "Good Afternoon!";
-        if (hour >= 15) greeting = "Good Evening!";
-        if (hour >= 19) greeting = "Good Night!";
+        if (hour >= 17) greeting = "Good Evening!";
         document.getElementById('greeting').textContent = greeting;
 
-        // Focus
         let focus = "Focus: Breakfast";
         if (hour >= 11) focus = "Focus: Lunch";
         if (hour >= 15) focus = "Focus: Dinner";
-        if (hour >= 19) focus = "Focus: Rest & Prep";
+        if (hour >= 20) focus = "Focus: Rest & Prep";
         document.getElementById('current-focus').textContent = focus;
 
-        // Load meals
         loadMeals();
         highlightMeal();
         loadSnack();
@@ -88,33 +79,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const ln = custom.lunch || defaults?.lunch;
         const dn = custom.dinner || defaults?.dinner;
 
-        if (bf) {
-            document.getElementById('meal-breakfast-title').textContent = bf.title;
-            document.getElementById('meal-breakfast-desc').textContent = bf.desc;
-        }
-        if (ln) {
-            document.getElementById('meal-lunch-title').textContent = ln.title;
-            document.getElementById('meal-lunch-desc').textContent = ln.desc;
-        }
-        if (dn) {
-            document.getElementById('meal-dinner-title').textContent = dn.title;
-            document.getElementById('meal-dinner-desc').textContent = dn.desc;
-        }
+        if (bf) updateMealCard('breakfast', bf);
+        if (ln) updateMealCard('lunch', ln);
+        if (dn) updateMealCard('dinner', dn);
+    }
+
+    function updateMealCard(type, data) {
+        document.getElementById(`meal-${type}-title`).textContent = data.title;
+        document.getElementById(`meal-${type}-desc`).textContent = data.desc;
     }
 
     function highlightMeal() {
         document.querySelectorAll('.meal-card').forEach(c => c.classList.remove('highlight'));
-
         let id = null;
         if (hour >= 6 && hour < 11) id = 'card-breakfast';
         else if (hour >= 11 && hour < 15) id = 'card-lunch';
         else if (hour >= 15 && hour < 22) id = 'card-dinner';
-
         if (id) document.getElementById(id)?.classList.add('highlight');
     }
 
     function loadSnack() {
-        // Time-based snack selection
         let timeKey = 'morning';
         if (hour >= 11 && hour < 15) timeKey = 'afternoon';
         else if (hour >= 15 && hour < 19) timeKey = 'evening';
@@ -122,11 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const snackList = SNACKS[timeKey] || SNACKS.morning;
         const snack = snackList[Math.floor(Math.random() * snackList.length)];
-
-        const labels = {
-            morning: '🌅 Morning Snack', afternoon: '☀️ Afternoon Snack',
-            evening: '🌆 Evening Snack', night: '🌙 Night Snack'
-        };
+        const labels = { morning: '🌅 Morning Snack', afternoon: '☀️ Afternoon Snack', evening: '🌆 Evening Snack', night: '🌙 Night Snack' };
 
         document.getElementById('snack-header').textContent = labels[timeKey];
         document.querySelector('#snack-card .snack-title').textContent = snack.title;
@@ -136,57 +116,53 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadQuickBites() {
         const container = document.getElementById('quick-list');
         container.innerHTML = '';
-
-        // Show late night warning after 7 PM
         const data = hour >= 19 ? QUICK_BITES.lateNight : QUICK_BITES.hungry;
-
         document.getElementById('quick-title').textContent = data.title;
 
         data.items.forEach(item => {
             const div = document.createElement('div');
             div.className = 'quick-item';
-            div.innerHTML = `<strong>${item.title}</strong><span>${item.desc}</span>`;
+            div.innerHTML = `<strong>${item.title}</strong> <span>${item.desc}</span>`;
             container.appendChild(div);
         });
-
-        if (data.tip) {
-            const tip = document.createElement('div');
-            tip.className = 'tip-box';
-            tip.textContent = data.tip;
-            container.appendChild(tip);
-        }
     }
 
     // ---------- WEEKLY TAB ----------
     function initWeekly() {
         const container = document.getElementById('weekly-container');
         container.innerHTML = '';
+        const selections = getStore(STORE.selections);
 
         DAYS.forEach((day, i) => {
             const data = MEAL_DATA[day];
             if (!data) return;
 
+            // For today, check if there are custom selections
+            let breakfast = data.breakfast;
+            let lunch = data.lunch;
+            let dinner = data.dinner;
+
+            if (i === dayIndex) {
+                const todayKey = today.toDateString();
+                const custom = selections[todayKey];
+                if (custom) {
+                    breakfast = custom.breakfast || breakfast;
+                    lunch = custom.lunch || lunch;
+                    dinner = custom.dinner || dinner;
+                }
+            }
+
             const card = document.createElement('div');
             card.className = `day-card${i === dayIndex ? ' today' : ''}`;
-
             card.innerHTML = `
                 <div class="day-header">
                     <span class="day-name">${DAY_LABELS[i]}</span>
                     ${i === dayIndex ? '<span class="day-badge">Today</span>' : ''}
                 </div>
-                <div class="day-meals">
-                    <div class="day-meal">
-                        <span class="day-meal-type">🌅 Breakfast</span>
-                        <span class="day-meal-name">${data.breakfast.title}</span>
-                    </div>
-                    <div class="day-meal">
-                        <span class="day-meal-type">🍱 Lunch</span>
-                        <span class="day-meal-name">${data.lunch.title}</span>
-                    </div>
-                    <div class="day-meal">
-                        <span class="day-meal-type">🌙 Dinner</span>
-                        <span class="day-meal-name">${data.dinner.title}</span>
-                    </div>
+                <div class="day-rows">
+                    <div class="day-row"><span>🌅 Breakfast</span><span>${breakfast.title}</span></div>
+                    <div class="day-row"><span>🍱 Lunch</span><span>${lunch.title}</span></div>
+                    <div class="day-row"><span>🌙 Dinner</span><span>${dinner.title}</span></div>
                 </div>
             `;
             container.appendChild(card);
@@ -197,37 +173,23 @@ document.addEventListener('DOMContentLoaded', () => {
     function initPrepare() {
         const tomorrow = DAY_LABELS[(dayIndex + 1) % 7];
         document.getElementById('prep-label').textContent = `Preparing for ${tomorrow}`;
-
         const data = MEAL_DATA[dayKey];
 
-        // Night tasks
         const tasksEl = document.getElementById('prep-tasks');
         tasksEl.innerHTML = '';
-        (data?.prep || []).forEach((txt, i) => {
-            tasksEl.appendChild(createCheckItem(`prep_${dayKey}_${i}`, txt));
-        });
-        // Static nightly
+        (data?.prep || []).forEach((txt, i) => tasksEl.appendChild(createCheckItem(`prep_${dayKey}_${i}`, txt)));
         tasksEl.appendChild(createCheckItem(`prep_${dayKey}_alm`, 'Soak 6 Almonds + 1 Walnut'));
         tasksEl.appendChild(createCheckItem(`prep_${dayKey}_met`, 'Soak Methi Seeds'));
 
-        // Groceries
         const grocEl = document.getElementById('prep-groceries');
         grocEl.innerHTML = '';
-        (data?.groceries || []).forEach((txt, i) => {
-            grocEl.appendChild(createCheckItem(`groc_${dayKey}_${i}`, `🛒 ${txt}`));
-        });
+        (data?.groceries || []).forEach((txt, i) => grocEl.appendChild(createCheckItem(`groc_${dayKey}_${i}`, `🛒 ${txt}`)));
 
-        // Daily essentials
         const essEl = document.getElementById('prep-essentials');
         essEl.innerHTML = '';
-        DAILY_ESSENTIALS.forEach((txt, i) => {
-            essEl.appendChild(createCheckItem(`ess_${today.toDateString()}_${i}`, txt));
-        });
+        DAILY_ESSENTIALS.forEach((txt, i) => essEl.appendChild(createCheckItem(`ess_${today.toDateString()}_${i}`, txt)));
 
-        // Custom ingredients from custom meals
         loadCustomIngredients();
-
-        // Restore checked states
         loadCheckedStates();
     }
 
@@ -256,21 +218,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const div = document.createElement('div');
         div.className = 'check-item';
         div.dataset.id = id;
-        div.innerHTML = `<div class="check-box"></div><span>${text}</span>`;
-        div.onclick = () => toggleCheck(div);
+        div.innerHTML = `<div class="check-circle"></div><span>${text}</span>`;
+        div.onclick = () => {
+            div.classList.toggle('done');
+            localStorage.setItem(id, div.classList.contains('done'));
+        };
         return div;
-    }
-
-    function toggleCheck(el) {
-        el.classList.toggle('done');
-        localStorage.setItem(el.dataset.id, el.classList.contains('done'));
     }
 
     function loadCheckedStates() {
         document.querySelectorAll('.check-item').forEach(el => {
-            if (localStorage.getItem(el.dataset.id) === 'true') {
-                el.classList.add('done');
-            }
+            if (localStorage.getItem(el.dataset.id) === 'true') el.classList.add('done');
         });
     }
 
@@ -289,19 +247,46 @@ document.addEventListener('DOMContentLoaded', () => {
     function createRecipeCard(recipe, isCustom = false) {
         const card = document.createElement('div');
         card.className = 'recipe-card';
-        if (isCustom) card.style.borderLeft = '3px solid var(--purple)';
+        // Remove style.css purple border override, handle in css if needed or keep subtle
+
+        let headerHtml = `<h3>${recipe.title}</h3>`;
+        if (isCustom) {
+            headerHtml = `
+                <div class="recipe-header">
+                    <h3>${recipe.title}</h3>
+                    <button class="delete-btn" title="Delete Recipe">✕</button>
+                </div>
+            `;
+        }
 
         card.innerHTML = `
-            <h3>${recipe.title}</h3>
+            ${headerHtml}
             <p class="desc">${recipe.desc || ''}</p>
             <div class="content">${recipe.content || ''}</div>
         `;
+
+        if (isCustom) {
+            card.querySelector('.delete-btn').onclick = (e) => {
+                e.stopPropagation();
+                if (confirm(`Delete recipe "${recipe.title}"?`)) {
+                    deleteCustomRecipe(recipe.id);
+                }
+            };
+        }
+
         return card;
+    }
+
+    function deleteCustomRecipe(id) {
+        let recipes = getStore(STORE.customRecipes);
+        recipes = recipes.filter(r => r.id !== id);
+        setStore(STORE.customRecipes, recipes);
+        initRecipes();
     }
 
     // ---------- TAB NAVIGATION ----------
     function setupTabs() {
-        document.querySelectorAll('.nav-btn').forEach(btn => {
+        document.querySelectorAll('.nav-btn[data-tab]').forEach(btn => {
             btn.onclick = () => {
                 document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
                 document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -315,13 +300,32 @@ document.addEventListener('DOMContentLoaded', () => {
     function setupCustomizeModal() {
         const modal = document.getElementById('customize-modal');
         const btn = document.getElementById('customize-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const resetBtn = document.getElementById('reset-btn');
 
         btn.onclick = () => {
             populateOptions();
+
+            // Determine active tab based on time (issue #9)
+            let activeTab = 'breakfast';
+            if (hour >= 11 && hour < 15) activeTab = 'lunch';
+            else if (hour >= 15) activeTab = 'dinner';
+
+            // Reset all tabs and panels
+            document.querySelectorAll('.modal-tabs .tab-btn').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.options-panel').forEach(p => p.classList.remove('active'));
+
+            // Activate time-appropriate tab
+            const targetTab = document.querySelector(`.modal-tabs .tab-btn[data-meal="${activeTab}"]`);
+            if (targetTab) {
+                targetTab.classList.add('active');
+                document.getElementById(`options-${activeTab}`).classList.add('active');
+            }
+
             modal.classList.remove('hidden');
         };
 
-        // Tab switching
+        // Modal Tabs
         document.querySelectorAll('.modal-tabs .tab-btn').forEach(tab => {
             tab.onclick = () => {
                 document.querySelectorAll('.modal-tabs .tab-btn').forEach(t => t.classList.remove('active'));
@@ -331,21 +335,17 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         });
 
-        // Close buttons
-        modal.querySelectorAll('[data-close]').forEach(el => {
-            el.onclick = () => modal.classList.add('hidden');
-        });
-        modal.onclick = e => { if (e.target === modal) modal.classList.add('hidden'); };
+        modal.querySelectorAll('[data-close]').forEach(el => el.onclick = () => modal.classList.add('hidden'));
+        modal.onclick = (e) => { if (e.target === modal) modal.classList.add('hidden'); };
 
-        // Save
-        document.getElementById('save-btn').onclick = () => {
+        saveBtn.onclick = () => {
             saveSelections();
             loadMeals();
+            initWeekly(); // Refresh Weekly tab to show updated meals
             modal.classList.add('hidden');
         };
 
-        // Reset
-        document.getElementById('reset-btn').onclick = () => {
+        resetBtn.onclick = () => {
             const selections = getStore(STORE.selections);
             delete selections[today.toDateString()];
             setStore(STORE.selections, selections);
@@ -362,100 +362,126 @@ document.addEventListener('DOMContentLoaded', () => {
         ['breakfast', 'lunch', 'dinner'].forEach(type => {
             const panel = document.getElementById(`options-${type}`);
             panel.innerHTML = '';
-
-            // Default options
-            MEAL_OPTIONS[type].forEach(meal => {
-                panel.appendChild(createOptionCard(meal, type, used, selections, false));
-            });
-
-            // Custom meals
-            customMeals.filter(m => m.type === type).forEach(meal => {
-                panel.appendChild(createOptionCard(meal, type, used, selections, true));
-            });
+            MEAL_OPTIONS[type].forEach(m => panel.appendChild(createOptionCard(m, type, used, selections, false)));
+            customMeals.filter(m => m.type === type).forEach(m => panel.appendChild(createOptionCard(m, type, used, selections, true)));
         });
     }
 
     function createOptionCard(meal, type, used, selections, isCustom) {
         const card = document.createElement('div');
-        card.className = 'option-card';
-        if (isCustom) card.classList.add('custom');
+        card.className = 'option-card'; // Styling handles validation
+
+        // Add delete button for custom meals
+        let deleteHtml = '';
+        if (isCustom) {
+            deleteHtml = `<button class="delete-btn" style="position: absolute; right: 10px; top: 10px;">✕</button>`;
+            card.style.position = 'relative';
+        }
+
         if (used.includes(meal.id)) card.classList.add('used');
         if (selections[type]?.id === meal.id) card.classList.add('selected');
 
         card.dataset.id = meal.id;
-        card.dataset.type = type;
-        card.dataset.title = meal.title;
-        card.dataset.desc = meal.desc || '';
-
         card.innerHTML = `
             <div class="option-title">${meal.title}</div>
             <div class="option-desc">${meal.desc || ''}</div>
+            ${deleteHtml}
         `;
 
-        card.onclick = () => {
-            if (card.classList.contains('used')) return;
-            card.parentElement.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
-            card.classList.add('selected');
+        card.onclick = (e) => {
+            if (e.target.classList.contains('delete-btn')) {
+                e.stopPropagation();
+                if (confirm(`Delete meal "${meal.title}"?`)) {
+                    deleteCustomMeal(meal.id);
+                    populateOptions(); // Refresh
+                }
+                return;
+            }
+            if (!card.classList.contains('used')) {
+                card.parentElement.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+            }
         };
-
         return card;
+    }
+
+    function deleteCustomMeal(id) {
+        let meals = getStore(STORE.customMeals);
+        meals = meals.filter(m => m.id !== id);
+        setStore(STORE.customMeals, meals);
+        initPrepare(); // Update grocery list
     }
 
     function saveSelections() {
         const selections = getStore(STORE.selections);
         const used = getStore(STORE.used);
-        const todayKey = today.toDateString();
-        selections[todayKey] = {};
+        const dayKey = today.toDateString();
+        selections[dayKey] = {};
 
         ['breakfast', 'lunch', 'dinner'].forEach(type => {
             const selected = document.querySelector(`#options-${type} .option-card.selected`);
             if (selected) {
-                const data = { id: selected.dataset.id, title: selected.dataset.title, desc: selected.dataset.desc };
-                selections[todayKey][type] = data;
-                if (!used.includes(data.id)) used.push(data.id);
+                const title = selected.querySelector('.option-title').textContent;
+                const desc = selected.querySelector('.option-desc').textContent;
+                const id = selected.dataset.id;
+                selections[dayKey][type] = { id, title, desc };
+                if (!used.includes(id)) used.push(id);
             }
         });
-
         setStore(STORE.selections, selections);
         setStore(STORE.used, used);
     }
 
-    // ---------- ADD MODAL (Meals & Recipes) ----------
+    // ---------- ADD MODAL ----------
     function setupAddModal() {
         const modal = document.getElementById('add-modal');
         const fab = document.getElementById('fab');
-        const addRecipeBtn = document.getElementById('add-recipe-btn');
-        let addingType = 'meal';
+        const mealTypeGroup = document.getElementById('meal-type-group');
+        const recipeContentGroup = document.getElementById('recipe-content-group');
+        const ingredientsGroup = document.getElementById('ingredients-group');
 
-        // Open for meal
-        fab.onclick = () => openAddModal('meal');
+        // Only FAB opens modal now
+        fab.onclick = () => openAddModal();
 
-        // Open for recipe
-        addRecipeBtn.onclick = () => openAddModal('recipe');
+        // Diet-friendly toggle buttons
+        document.querySelectorAll('.diet-option').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.diet-option').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
 
-        function openAddModal(type) {
-            addingType = type;
-            document.getElementById('add-type').value = type;
-            document.getElementById('add-modal-title').textContent = type === 'meal' ? 'Add New Meal' : 'Add New Recipe';
-            document.getElementById('meal-type-group').style.display = type === 'meal' ? 'block' : 'none';
-            document.getElementById('recipe-content-group').style.display = type === 'recipe' ? 'block' : 'none';
-            document.getElementById('ingredients-group').style.display = type === 'meal' ? 'block' : 'none';
+                const isDiet = btn.dataset.value === 'yes';
+                mealTypeGroup.style.display = isDiet ? 'none' : 'block';
+                recipeContentGroup.style.display = isDiet ? 'block' : 'none';
+            };
+        });
 
-            // Reset form
+        function openAddModal() {
+            document.getElementById('add-modal-title').textContent = 'Add New Meal';
             document.getElementById('add-form').reset();
-            document.getElementById('ingredients-inputs').innerHTML = '<input type="text" class="ing-input" placeholder="Ingredient 1">';
-            document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+
+            // Reset to normal meal mode (No selected)
+            document.querySelectorAll('.diet-option').forEach(b => b.classList.remove('active'));
+            document.querySelector('.diet-option[data-value="no"]').classList.add('active');
+            mealTypeGroup.style.display = 'block';
+            recipeContentGroup.style.display = 'none';
+            ingredientsGroup.style.display = 'block';
+
+            // Properly reset ingredients section
+            ingContainer.innerHTML = '';
+            ingContainer.classList.add('hidden');
+            addIngBtn.classList.add('hidden');
+            showIngBtn.classList.remove('hidden');
+
+            // Reset meal type toggles
+            document.querySelectorAll('.type-btn').forEach(t => t.classList.remove('active'));
 
             modal.classList.remove('hidden');
         }
 
-        // Close
-        modal.querySelectorAll('[data-close]').forEach(el => {
-            el.onclick = () => modal.classList.add('hidden');
-        });
+        modal.querySelectorAll('[data-close]').forEach(el => el.onclick = () => modal.classList.add('hidden'));
         modal.onclick = e => { if (e.target === modal) modal.classList.add('hidden'); };
 
-        // Type buttons
+        // Handle meal type selection with new class system
         document.querySelectorAll('.type-btn').forEach(btn => {
             btn.onclick = () => {
                 document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
@@ -463,73 +489,110 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         });
 
-        // Add ingredient
+        const ingGroup = document.getElementById('ingredients-group');
+        const ingContainer = document.getElementById('ingredients-inputs');
         const addIngBtn = document.getElementById('add-ing-btn');
-        addIngBtn.onclick = () => {
-            const container = document.getElementById('ingredients-inputs');
-            if (container.children.length >= 5) {
-                addIngBtn.disabled = true;
-                return;
+        const showIngBtn = document.getElementById('show-ing-btn');
+
+        // Toggle ingredients visibility
+        showIngBtn.onclick = () => {
+            ingContainer.classList.remove('hidden');
+            addIngBtn.classList.remove('hidden');
+            showIngBtn.classList.add('hidden');
+            // Add first input if empty
+            if (ingContainer.children.length === 0) {
+                addIngInput();
             }
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.className = 'ing-input';
-            input.placeholder = `Ingredient ${container.children.length + 1}`;
-            container.appendChild(input);
-            if (container.children.length >= 5) addIngBtn.disabled = true;
         };
 
-        // Submit
+        addIngBtn.onclick = () => addIngInput();
+
+        function addIngInput() {
+            if (ingContainer.children.length < 5) {
+                const wrapper = document.createElement('div');
+                wrapper.style.cssText = 'display: flex; gap: 8px; align-items: center; margin-bottom: 8px;';
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'ing-input';
+                input.placeholder = `Ingredient ${ingContainer.children.length + 1}`;
+                input.style.marginBottom = '0'; // Override default margin
+
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.textContent = '✕';
+                removeBtn.className = 'remove-ing-btn';
+                removeBtn.style.cssText = 'background: var(--tint-danger); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-size: 14px; flex-shrink: 0;';
+                removeBtn.onclick = () => wrapper.remove();
+
+                wrapper.appendChild(input);
+                wrapper.appendChild(removeBtn);
+                ingContainer.appendChild(wrapper);
+            }
+        }
+
         document.getElementById('submit-add').onclick = () => {
             const name = document.getElementById('add-name').value.trim();
-            if (!name) return alert('Name is required!');
-
+            if (!name) return alert('Name is required');
             const desc = document.getElementById('add-desc').value.trim();
+            const isDiet = document.querySelector('.diet-option.active')?.dataset.value === 'yes';
+            const ings = [...document.querySelectorAll('.ing-input')].map(i => i.value.trim()).filter(Boolean);
 
-            if (addingType === 'meal') {
-                const typeBtn = document.querySelector('.type-btn.active');
-                if (!typeBtn) return alert('Please select a meal type!');
+            if (isDiet) {
+                // Diet-friendly meal/recipe
+                const content = document.getElementById('add-content').value.trim();
+                if (!content) return alert('Please add recipe steps/instructions for diet-friendly meals');
 
-                const mealType = typeBtn.dataset.value;
-                const ingredients = [...document.querySelectorAll('.ing-input')]
-                    .map(i => i.value.trim())
-                    .filter(Boolean);
+                // Save as BOTH meal and recipe
+                const id = `df_${Date.now()}`;
 
+                // Add to recipes for display in Recipes tab
+                const recipes = getStore(STORE.customRecipes);
+                recipes.push({ id, title: name, desc, content, isDietFriendly: true });
+                setStore(STORE.customRecipes, recipes);
+
+                // Also add to all meal types so it appears in customization for any meal
                 const meals = getStore(STORE.customMeals);
-                meals.push({
-                    id: `cm_${Date.now()}`,
-                    title: name,
-                    desc: desc,
-                    type: mealType,
-                    ingredients: ingredients
+                ['breakfast', 'lunch', 'dinner'].forEach(type => {
+                    meals.push({
+                        id: `${id}_${type}`,
+                        title: `${name} 🥗`,
+                        desc,
+                        type,
+                        ingredients: ings,
+                        isDietFriendly: true,
+                        recipeContent: content
+                    });
                 });
                 setStore(STORE.customMeals, meals);
-                initPrepare(); // Refresh to show new ingredients
-            } else {
-                const content = document.getElementById('add-content').value.trim();
-                const recipes = getStore(STORE.customRecipes);
-                recipes.push({
-                    id: `cr_${Date.now()}`,
-                    title: name,
-                    desc: desc,
-                    content: content
-                });
-                setStore(STORE.customRecipes, recipes);
-                initRecipes();
-            }
 
+                initRecipes();
+                initPrepare();
+                alert(`✅ Diet-friendly "${name}" added to all meal options!`);
+            } else {
+                // Normal meal
+                const activeType = document.querySelector('.type-btn.active');
+                if (!activeType) return alert('Please select a meal type (Breakfast, Lunch, or Dinner)');
+                const mType = activeType.dataset.value;
+
+                const meals = getStore(STORE.customMeals);
+                meals.push({ id: `cm_${Date.now()}`, title: name, desc, type: mType, ingredients: ings });
+                setStore(STORE.customMeals, meals);
+                initPrepare();
+
+                alert(`✅ "${name}" added successfully!`);
+            }
             modal.classList.add('hidden');
-            loadCheckedStates();
         };
     }
 
-    // ---------- STORAGE HELPERS ----------
+    // ---------- HELPERS ----------
     function getStore(key) {
-        try { return JSON.parse(localStorage.getItem(key)) || (key.includes('used') ? [] : {}); }
-        catch { return key.includes('used') ? [] : {}; }
+        try {
+            const val = JSON.parse(localStorage.getItem(key));
+            if (key.includes('used') || key.includes('custom')) return val || [];
+            return val || {};
+        } catch { return key.includes('used') || key.includes('custom') ? [] : {}; }
     }
-
-    function setStore(key, value) {
-        localStorage.setItem(key, JSON.stringify(value));
-    }
+    function setStore(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
 });

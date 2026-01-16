@@ -1,37 +1,296 @@
-# 🌿 Nourish Daily
+# 🍽️ Nourish Daily
 
-A simple, intelligent meal planning application designed to help manage daily nutrition, grocery prep, and special dietary needs.
+**Smart meal planning and nutrition tracking app with Ayurvedic principles**
 
-## Features
+A Progressive Web App (PWA) for managing daily meals, recipes, and meal planning with time-based recommendations, customization, and offline support.
 
-- **Daily Meal Dashboard**: Breakfast, Lunch, and Dinner plans with time-based highlighting.
-- **Weekly Overview**: View the entire week's meal plan at a glance.
-- **Smart Prep**: Combined view for night prep tasks, grocery checks, and daily essentials.
-- **Time-Aware Suggestions**: Dynamic snack recommendations based on the time of day (Morning, Afternoon, Evening, Late Night).
-- **Emergency Protocol**: Quick, filling meal options for when hunger strikes unexpectedly.
-- **Recipe Manager**: Built-in recipes with the ability to add custom meals and dietary notes.
-- **Dark Mode**: Toggle between light and dark themes for comfortable viewing.
-- **Responsive Design**: Mobile-first interface for easy access on any device.
+![Version](https://img.shields.io/badge/version-1.0.0-green)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![PWA](https://img.shields.io/badge/PWA-enabled-purple)
 
-## Tech Stack
+---
 
-- **HTML5**: Semantic structure.
-- **CSS3**: Custom variables, flexbox/grid, and responsive media queries.
-- **JavaScript (ES6+)**: LocalStorage persistence, dynamic DOM manipulation, and logic management.
+## ✨ Features
 
-## Setup
+- 📱 **Progressive Web App** - Install on mobile & desktop
+- 🌙 **Dark Mode** - Eye-friendly interface
+- ⏰ **Time-Based Logic** - Meal recommendations based on current time
+- 🍴 **Meal Customization** - Personalize daily meals
+- 📅 **Weekly Planner** - View entire week's meal plan
+- 🥗 **Diet-Friendly Meals** - Special diets with recipes
+- 📝 **Custom Meals & Recipes** - Add your own
+- 🗑️ **Ingredient Management** - Add/remove individual ingredients
+- 💾 **Offline Mode** - Works without internet
+- ⚙️ **Configurable** - Feature flags and settings
 
-1.  Clone the repository.
-2.  Open `index.html` in any modern web browser.
-3.  Start planning your meals!
+---
 
-## Usage
+## 🚀 Quick Start
 
-- **Customize**: Click "Customize Today's Meals" to swap dishes from the available pool.
-- **Add New**: Use the floating `+` button to add custom meals or ingredients.
-- **Prep**: Check the "Prepare" tab every evening to ensure you're ready for the next day.
-- **Dark Mode**: Tap the moon icon in the header for night usage.
+### Local Development
 
-## License
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/nourish-daily.git
+   cd nourish-daily
+   ```
 
-MIT
+2. **Run locally**:
+   ```bash
+   # Option 1: Python
+   python3 -m http.server 8000
+   
+   # Option 2: Node.js
+   npx serve
+   
+   # Option 3: VS Code Live Server
+   # Install "Live Server" extension and click "Go Live"
+   ```
+
+3. **Access the app**:
+   ```
+   http://localhost:8000
+   ```
+
+### Deploy to GitHub Pages
+
+See [DEPLOYMENT.md](/Users/chinmaybhushan/.gemini/antigravity/brain/a62d440e-9faa-4e7b-b397-52b6b54f2c2e/DEPLOYMENT.md) for complete deployment guide.
+
+**TL;DR**:
+```bash
+git push origin main
+# GitHub Actions auto-deploys to GitHub Pages
+```
+
+---
+
+## 📁 File Structure
+
+```
+nourish-daily/
+├── index.html          # Main app interface
+├── style.css           # Styling (Apple Design System)
+├── script.js           # Core application logic
+├── data.js             # Meal plans, recipes, and data
+├── config.js           # Configuration & feature flags
+├── sw.js               # Service worker (offline support)
+├── manifest.json       # PWA manifest
+├── tests.html          # Test suite
+├── CONFIG.md           # Configuration documentation
+├── .github/
+│   └── workflows/
+│       └── deploy.yml  # CI/CD pipeline
+└── icons/              # PWA app icons (optional)
+```
+
+---
+
+## ⚙️ Configuration
+
+All configurable settings are in `config.js`.
+
+### Feature Flags
+
+Enable/disable features:
+
+```javascript
+features: {
+    darkMode: true,              // Toggle dark mode
+    customMeals: true,            // Allow custom meals
+    dietFriendlyMeals: true,      // Diet-friendly option
+    weeklyView: true,             // Weekly tab
+    customizeToday: true          // Meal customization
+}
+```
+
+### Time Ranges
+
+Customize time periods (24-hour format):
+
+```javascript
+timeRanges: {
+    morning: { start: 6, end: 11 },
+    afternoon: { start: 11, end: 15 },
+    evening: { start: 15, end: 19 },
+    night: { start: 19, end: 24 }
+}
+```
+
+See [CONFIG.md](CONFIG.md) for complete configuration guide.
+
+---
+
+## 📝 Editing Data
+
+### Adding Meals to Weekly Plan
+
+Edit `data.js`:
+
+```javascript
+MEAL_DATA: {
+    monday: {
+        breakfast: { 
+            id: 'bf_1', 
+            title: 'Oatmeal', 
+            desc: 'Healthy start' 
+        },
+        lunch: { 
+            id: 'ln_1', 
+            title: 'Salad Bowl', 
+            desc: 'Fresh greens' 
+        },
+        // ... more meals
+    }
+}
+```
+
+### Adding Recipes
+
+```javascript
+RECIPES: [
+    {
+        title: "My Recipe",
+        desc: "Short description",
+        content: "Step 1: ...\nStep 2: ..."
+    }
+]
+```
+
+### Adding Meal Options
+
+Options appear in "Customize Today's Meals":
+
+```javascript
+MEAL_OPTIONS: {
+    breakfast: [
+        { id: 'bf_opt1', title: 'Poha', desc: 'Light breakfast' }
+    ]
+}
+```
+
+---
+
+## 🧪 Testing
+
+### Run Tests
+
+1. Open `tests.html` in browser
+2. View test results (target: >85% coverage)
+3. All tests should pass
+
+### Manual Testing Checklist
+
+- [ ] Dark mode toggle works
+- [ ] Add custom meal (normal)
+- [ ] Add diet-friendly meal
+- [ ] Customize today's meals
+- [ ] Verify Weekly tab updates after customization
+- [ ] Add/remove ingredients
+- [ ] Delete custom meals/recipes
+- [ ] Test offline mode (disable network)
+- [ ] Install as PWA
+
+---
+
+## 🎨 Customization
+
+### Branding
+
+1. **App Name**: Edit `config.js` → `labels.appName`
+2. **Theme Color**: Edit `config.js` → `pwa.themeColor`
+3. **Icons**: Add PNG files to `/icons/` directory
+
+### Time Behavior
+
+Adjust when meals are highlighted:
+
+```javascript
+// config.js
+mealTimes: {
+    breakfast: { start: 7, end: 10 },  // Customize times
+    lunch: { start: 12, end: 14 },
+    dinner: { start: 18, end: 21 }
+}
+```
+
+---
+
+## 🔧 Troubleshooting
+
+### App not updating after deployment
+
+- Hard refresh: `Ctrl+Shift+R` (Windows) or `Cmd+Shift+R` (Mac)
+- Clear service worker: DevTools → Application → Service Workers → Unregister
+
+### Weekly tab not showing customizations
+
+- Ensure `initWeekly()` is called after `saveSelections()`
+- Check browser console for errors
+- Verify localStorage is not disabled
+
+### Service worker errors
+
+- Check `sw.js` paths match your deployment URL
+- Verify `manifest.json` `start_url`equals `/nourish-daily/` (or your repo name)
+- Clear cache: DevTools → Application → Clear storage
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Commit changes: `git commit -m "Add my feature"`
+4. Push: `git push origin feature/my-feature`
+5. Open a Pull Request
+
+---
+
+## 📊 Development Standards
+
+### Code Style
+
+- Use ES6+ JavaScript
+- Semantic HTML5
+- BEM-like CSS class naming
+- Apple Human Interface Guidelines for design
+
+### Before Committing
+
+1. Run tests (`tests.html`)
+2. Check browser console for errors
+3. Test dark mode
+4. Verify PWA installability
+5. Test on mobile viewport
+
+---
+
+## 📚 Documentation
+
+- [CONFIG.md](CONFIG.md) - Configuration guide
+- [DEPLOYMENT.md](/Users/chinmaybhushan/.gemini/antigravity/brain/a62d440e-9faa-4e7b-b397-52b6b54f2c2e/DEPLOYMENT.md) - GitHub Pages deployment
+- [icons/README.md](icons/README.md) - Icon generation guide
+
+---
+
+## 🐛 Known Issues
+
+None currently. Report issues on GitHub.
+
+---
+
+## 📜 License
+
+MIT License - feel free to use for personal or commercial projects.
+
+---
+
+## 🙏 Acknowledgments
+
+- Design inspired by Apple Human Interface Guidelines
+- Ayurvedic meal planning principles
+- Progressive Web App best practices
+
+---
+
+**Made with ❤️ for healthy living**

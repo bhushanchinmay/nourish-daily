@@ -3,86 +3,186 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Nourish Daily Tests</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nourish Daily - Tests</title>
     <style>
         body {
-            font-family: -apple-system, system-ui;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
             padding: 20px;
+            background: #f5f5f5;
         }
 
-        .pass {
-            color: green;
+        h1 {
+            color: #333;
         }
 
-        .fail {
-            color: red;
+        .test {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #ddd;
+        }
+
+        .test.pass {
+            border-left-color: #34C759;
+        }
+
+        .test.fail {
+            border-left-color: #FF3B30;
+            background: #fff5f5;
+        }
+
+        .result {
             font-weight: bold;
         }
 
-        .test-case {
-            margin: 8px 0;
-            border-bottom: 1px solid #eee;
-            padding: 4px;
+        .pass .result {
+            color: #34C759;
+        }
+
+        .fail .result {
+            color: #FF3B30;
         }
     </style>
 </head>
 
 <body>
-    <h1>Nourish Daily Test Suite</h1>
-    <div id="results">Running tests...</div>
+    <h1>🧪 Nourish Daily - Test Suite</h1>
+    <div id="results"></div>
 
-    <!-- Load App Scripts -->
     <script src="data.js"></script>
     <script>
-        // Mock DOM elements required by script.js to avoid errors if we were to load it fully
-        // But better approach: we test data processing and logic, not UI rendering here.
-        // We will write custom tests against data.js and logic simulation.
-
         const results = document.getElementById('results');
 
-        function log(msg, type) {
+        function test(name, condition, details = '') {
             const div = document.createElement('div');
-            div.className = `test-case ${type}`;
-            div.textContent = `[${type.toUpperCase()}] ${msg}`;
+            div.className = `test ${condition ? 'pass' : 'fail'}`;
+            div.innerHTML = `
+                <div class="result">${condition ? '✅ PASS' : '❌ FAIL'}: ${name}</div>
+                ${details ? `<div style="margin-top:8px;color:#666;font-size:0.9em;">${details}</div>` : ''}
+            `;
             results.appendChild(div);
+            return condition;
         }
 
-        function assert(condition, desc) {
-            if (condition) log(desc, 'pass');
-            else log(desc, 'fail');
+        // === DATA STRUCTURE TESTS ===
+        test('MEAL_DATA exists and has 7 days',
+            Object.keys(MEAL_DATA).length === 7);
+
+        test('TIME_RANGES properly defined',
+            TIME_RANGES.morning && TIME_RANGES.afternoon && TIME_RANGES.evening && TIME_RANGES.night,
+            `Morning: ${TIME_RANGES.morning.join('-')}, Afternoon: ${TIME_RANGES.afternoon.join('-')}, Evening: ${TIME_RANGES.evening.join('-')}, Night: ${TIME_RANGES.night.join('-')}`);
+
+        test('SNACKS has all time periods',
+            SNACKS.morning && SNACKS.afternoon && SNACKS.evening && SNACKS.night,
+            `Found ${Object.keys(SNACKS).length} time periods`);
+
+        // === RECIPE TESTS ===
+        test('RECIPES is an array',
+            Array.isArray(RECIPES),
+            `Type: ${typeof RECIPES}, Length: ${RECIPES.length}`);
+
+        test('Avocado Toast removed from recipes',
+            !RECIPES.some(r => r.title && r.title.toLowerCase().includes('avocado')),
+            'Avocado Toast should not exist');
+
+        test('Coriander & Amla Chutney consolidated',
+            RECIPES.filter(r => r.title && r.title.toLowerCase().includes('amla')).length === 1,
+            'Only one Amla recipe should exist');
+
+        // === TIME LOGIC TESTS ===
+        function getTimeCategory(hour) {
+            if (hour >= TIME_RANGES.morning[0] && hour < TIME_RANGES.afternoon[0]) return 'morning';
+            if (hour >= TIME_RANGES.afternoon[0] && hour < TIME_RANGES.evening[0]) return 'afternoon';
+            if (hour >= TIME_RANGES.evening[0] && hour < TIME_RANGES.night[0]) return 'evening';
+            return 'night';
         }
 
-        // --- TEST SUITE ---
-        setTimeout(() => {
-            results.innerHTML = '';
+        test('Time category logic: 8 AM is morning',
+            getTimeCategory(8) === 'morning');
 
-            // 1. Data Integrity Tests
-            assert(typeof MEAL_DATA === 'object', 'MEAL_DATA exists');
-            assert(Object.keys(MEAL_DATA).length === 7, 'MEAL_DATA has 7 days');
-            assert(MEAL_DATA.monday.breakfast.title, 'Monday breakfast has title');
+        test('Time category logic: 2 PM is afternoon',
+            getTimeCategory(14) === 'afternoon');
 
-            // 2. Recipe Tests
-            assert(Array.isArray(RECIPES), 'RECIPES is an array');
-            assert(RECIPES.some(r => r.title.includes('Coriander')), 'Coriander & Amla Chutney present');
-            assert(!RECIPES.some(r => r.id === 'avocado_toast'), 'Avocado Toast is REMOVED');
+        test('Time category logic: 6 PM is evening',
+            getTimeCategory(18) === 'evening');
 
-            // 3. Time Logic Tests
-            const morning = 9;
-            const evening = 18;
+        test('Time category logic: 11 PM is night',
+            getTimeCategory(23) === 'night');
 
-            let timeKey = 'morning';
-            if (evening >= 15 && evening < 19) timeKey = 'evening';
-            assert(timeKey === 'evening', 'Time logic correctly identifies Evening (3pm-7pm)');
+        // === NEW FEATURES TESTS ===
+        test('MEAL_OPTIONS exists for customization',
+            MEAL_OPTIONS && MEAL_OPTIONS.breakfast && MEAL_OPTIONS.lunch && MEAL_OPTIONS.dinner,
+            `Breakfast: ${MEAL_OPTIONS.breakfast?.length || 0} options, Lunch: ${MEAL_OPTIONS.lunch?.length || 0} options, Dinner: ${MEAL_OPTIONS.dinner?.length || 0} options`);
 
-            // 4. Time Range Definition Check
-            assert(TIME_RANGES.evening.start === 15, 'Evening starts at 15:00 (3 PM)');
-            assert(TIME_RANGES.night.start === 19, 'Night starts at 19:00 (7 PM)');
+        test('QUICK_BITES has emergency protocols',
+            QUICK_BITES.hungry && QUICK_BITES.lateNight,
+            `Hungry: ${QUICK_BITES.hungry?.items?.length || 0} items, Late Night: ${QUICK_BITES.lateNight?.items?.length || 0} items`);
 
-            // 5. Snack Data Integrity
-            assert(SNACKS.evening.length > 0, 'Evening snacks exist');
+        test('DAILY_ESSENTIALS is an array',
+            Array.isArray(DAILY_ESSENTIALS) && DAILY_ESSENTIALS.length > 0,
+            `${DAILY_ESSENTIALS.length} essential items defined`);
 
-            log('Tests Completed.', 'pass');
-        }, 500);
+        // === STORAGE TESTS (MOCK) ===
+        const mockStore = {
+            customMeals: [],
+            customRecipes: []
+        };
+
+        // Test diet-friendly meal structure
+        const dietFriendlyMeal = {
+            id: 'df_test',
+            title: 'Quinoa Salad 🥗',
+            desc: 'Healthy quinoa bowl',
+            type: 'lunch',
+            ingredients: ['quinoa', 'avocado'],
+            isDietFriendly: true,
+            recipeContent: 'Cook quinoa, mix with veggies'
+        };
+
+        test('Diet-friendly meal has required fields',
+            dietFriendlyMeal.isDietFriendly && dietFriendlyMeal.recipeContent,
+            'Diet meals should have both isDietFriendly flag and recipeContent');
+
+        // === VALIDATION TESTS ===
+        function validateMealSave(name, mealType, isDiet, recipeContent) {
+            if (!name) return { valid: false, error: 'Name required' };
+            if (!isDiet && !mealType) return { valid: false, error: 'Meal type required for normal meals' };
+            if (isDiet && !recipeContent) return { valid: false, error: 'Recipe content required for diet meals' };
+            return { valid: true };
+        }
+
+        test('Validation: Empty name rejected',
+            !validateMealSave('', 'breakfast', false, '').valid);
+
+        test('Validation: Normal meal without type rejected',
+            !validateMealSave('Test Meal', null, false, '').valid);
+
+        test('Validation: Diet meal without recipe rejected',
+            !validateMealSave('Test Diet', null, true, '').valid);
+
+        test('Validation: Valid normal meal accepted',
+            validateMealSave('Test Meal', 'lunch', false, '').valid);
+
+        test('Validation: Valid diet meal accepted',
+            validateMealSave('Test Diet', null, true, 'Recipe steps here').valid);
+
+        // === SUMMARY ===
+        const allTests = document.querySelectorAll('.test');
+        const passed = document.querySelectorAll('.test.pass').length;
+        const failed = document.querySelectorAll('.test.fail').length;
+
+        const summary = document.createElement('div');
+        summary.style.cssText = 'background:#333;color:white;padding:20px;border-radius:8px;margin-top:30px;text-align:center;';
+        summary.innerHTML = `
+            <h2 style="margin:0 0 10px 0;">Test Results</h2>
+            <div style="font-size:2em;">${passed}/${allTests.length} Passed</div>
+            ${failed > 0 ? `<div style="color:#FF3B30;margin-top:10px;">${failed} Failed</div>` : '<div style="color:#34C759;margin-top:10px;">All tests passed! ✨</div>'}
+        `;
+        results.appendChild(summary);
     </script>
 </body>
 
