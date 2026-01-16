@@ -914,3 +914,4 @@ document.addEventListener('DOMContentLoaded', () => {
         initToday(); //  Refresh Today tab
         alert('✅ Recipe deleted successfully!');
     }
+});
