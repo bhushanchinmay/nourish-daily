@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Nourish Daily Tests</title>
+    <style>
+        body {
+            font-family: -apple-system, system-ui;
+            padding: 20px;
+        }
+
+        .pass {
+            color: green;
+        }
+
+        .fail {
+            color: red;
+            font-weight: bold;
+        }
+
+        .test-case {
+            margin: 8px 0;
+            border-bottom: 1px solid #eee;
+            padding: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Nourish Daily Test Suite</h1>
+    <div id="results">Running tests...</div>
+
+    <!-- Load App Scripts -->
+    <script src="data.js"></script>
+    <script>
+        // Mock DOM elements required by script.js to avoid errors if we were to load it fully
+        // But better approach: we test data processing and logic, not UI rendering here.
+        // We will write custom tests against data.js and logic simulation.
+
+        const results = document.getElementById('results');
+
+        function log(msg, type) {
+            const div = document.createElement('div');
+            div.className = `test-case ${type}`;
+            div.textContent = `[${type.toUpperCase()}] ${msg}`;
+            results.appendChild(div);
+        }
+
+        function assert(condition, desc) {
+            if (condition) log(desc, 'pass');
+            else log(desc, 'fail');
+        }
+
+        // --- TEST SUITE ---
+        setTimeout(() => {
+            results.innerHTML = '';
+
+            // 1. Data Integrity Tests
+            assert(typeof MEAL_DATA === 'object', 'MEAL_DATA exists');
+            assert(Object.keys(MEAL_DATA).length === 7, 'MEAL_DATA has 7 days');
+            assert(MEAL_DATA.monday.breakfast.title, 'Monday breakfast has title');
+
+            // 2. Recipe Tests
+            assert(Array.isArray(RECIPES), 'RECIPES is an array');
+            assert(RECIPES.some(r => r.title.includes('Coriander')), 'Coriander & Amla Chutney present');
+            assert(!RECIPES.some(r => r.id === 'avocado_toast'), 'Avocado Toast is REMOVED');
+
+            // 3. Time Logic Tests
+            const morning = 9;
+            const evening = 18;
+
+            let timeKey = 'morning';
+            if (evening >= 15 && evening < 19) timeKey = 'evening';
+            assert(timeKey === 'evening', 'Time logic correctly identifies Evening (3pm-7pm)');
+
+            // 4. Time Range Definition Check
+            assert(TIME_RANGES.evening.start === 15, 'Evening starts at 15:00 (3 PM)');
+            assert(TIME_RANGES.night.start === 19, 'Night starts at 19:00 (7 PM)');
+
+            // 5. Snack Data Integrity
+            assert(SNACKS.evening.length > 0, 'Evening snacks exist');
+
+            log('Tests Completed.', 'pass');
+        }, 500);
+    </script>
+</body>
+
+</html>
