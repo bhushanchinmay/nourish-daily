@@ -4,7 +4,7 @@
 
 A Progressive Web App (PWA) for managing daily meals, recipes, and meal planning with time-based recommendations, customization, and offline support.
 
-![Version](https://img.shields.io/badge/version-1.0.0-green)
+![Version](https://img.shields.io/badge/version-1.1.0-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![PWA](https://img.shields.io/badge/PWA-enabled-purple)
 
@@ -19,6 +19,7 @@ A Progressive Web App (PWA) for managing daily meals, recipes, and meal planning
 - 📅 **Weekly Planner** - View entire week's meal plan
 - 🥗 **Diet-Friendly Meals** - Special diets with recipes
 - 📝 **Custom Meals & Recipes** - Add your own
+- ✏️ **Edit & Manage** - Full CRUD operations for custom items (v1.1.0)
 - 🗑️ **Ingredient Management** - Add/remove individual ingredients
 - 💾 **Offline Mode** - Works without internet
 - ⚙️ **Configurable** - Feature flags and settings
@@ -270,6 +271,67 @@ mealTimes: {
 - [CONFIG.md](CONFIG.md) - Configuration guide
 - [DEPLOYMENT.md](/Users/chinmaybhushan/.gemini/antigravity/brain/a62d440e-9faa-4e7b-b397-52b6b54f2c2e/DEPLOYMENT.md) - GitHub Pages deployment
 - [icons/README.md](icons/README.md) - Icon generation guide
+
+---
+
+## 📜 Changelog
+
+### v1.1.0 (2026-01-16) - Meal Management & Bug Fixes
+
+**✨ New Features**:
+- **Manage Tab**: New dedicated tab to view, edit, and delete all custom meals and recipes
+- **Edit Functionality**: Edit any custom meal or recipe with pre-populated forms
+- **Delete Confirmations**: Safe deletion with confirmation dialogs
+- **Semantic Versioning**: Version display in header (v1.1.0) and package.json with changelog
+
+**🐛 Bug Fixes**:
+- **Ingredient Deduplication**: Fixed 3x duplication of ingredients in Prep tab for diet-friendly meals
+  - Implemented Map/Set based deduplication
+  - Diet-friendly meals now grouped in Manage tab (appear once instead of 3x)
+- **Delete Cascade**: Deleting meals now properly removes ingredients from Prep tab
+- **Weekly Tab Updates**: Fixed issue where customizations weren't immediately visible (from v1.0.0)
+
+**🔧 Improvements**:
+- Diet-friendly meals update all 3 instances when edited (breakfast, lunch, dinner)
+- Delete removes all related data (meals + recipes + ingredients)
+- Better UX with clearly visible Edit/Delete buttons in Manage tab
+
+**🧪 Testing**:
+- Added comprehensive integration test suite (20+ tests)
+- Tests for deduplication, editing, deletion, and versioning
+
+---
+
+### v1.0.0 (2026-01-16) - Initial PWA Release
+
+**✨ Features**:
+- Progressive Web App with offline support
+- Dark mode toggle
+- Time-based meal recommendations
+- Weekly meal planning view
+- Customizable daily meals
+- Add custom meals and recipes
+- Diet-friendly meal options
+- Individual ingredient management with remove buttons
+- Prepare tab with grocery list
+- GitHub Pages deployment with CI/CD
+
+**🎨 Design**:
+- Apple Human Interface Guidelines inspired
+- Responsive design for mobile and desktop
+- Smooth animations and transitions
+- Glassmorphism effects
+
+**⚙️ Configuration**:
+- Feature flags system (config.js)
+- Environment configuration (env.config.js)
+- Customizable time ranges
+- Configurable validation rules
+
+**🚀 Deployment**:
+- GitHub Actions workflow for auto-deployment
+- Service worker for offline functionality
+- PWA manifest for installability
 
 ---
 

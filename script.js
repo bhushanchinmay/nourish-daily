@@ -880,14 +880,14 @@ function deleteMeal(id, isDietFriendly) {
         const recipes = getStore(STORE.customRecipes);
         const filteredRecipes = recipes.filter(r => !r.id.startsWith(baseId));
         setStore(STORE.customRecipes, filteredRecipes);
+        initRecipes(); // Refresh recipes tab
     } else {
         const filtered = meals.filter(m => m.id !== id);
         setStore(STORE.customMeals, filtered);
     }
 
-    initManage();
-    initPrepare();
-    initRecipes();
+    initManage(); // Refresh manage tab
+    initPrepare(); // CRITICAL: Refresh Prep tab to remove deleted meal's ingredients
     alert('✅ Meal deleted successfully!');
 }
 
