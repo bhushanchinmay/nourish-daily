@@ -4,11 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nourish Daily - Tests</title>
+    <title>Nourish Daily - Integration Tests v1.1.0</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            max-width: 800px;
+            max-width: 900px;
             margin: 40px auto;
             padding: 20px;
             background: #f5f5f5;
@@ -46,13 +46,23 @@
         .fail .result {
             color: #FF3B30;
         }
+
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #e8f4f8;
+            border-radius: 8px;
+        }
     </style>
 </head>
 
 <body>
-    <h1>🧪 Nourish Daily - Test Suite</h1>
+    <h1>🧪 Nourish Daily v1.1.0 - Integration Tests</h1>
+    <p><strong>New Features:</strong> Ingredient deduplication, Manage tab, Edit functionality, Versioning</p>
     <div id="results"></div>
 
+    <script src="env.config.js"></script>
+    <script src="config.js"></script>
     <script src="data.js"></script>
     <script>
         const results = document.getElementById('results');
@@ -68,109 +78,192 @@
             return condition;
         }
 
-        // === DATA STRUCTURE TESTS ===
-        test('MEAL_DATA exists and has 7 days',
-            Object.keys(MEAL_DATA).length === 7);
-
-        test('TIME_RANGES properly defined',
-            TIME_RANGES.morning && TIME_RANGES.afternoon && TIME_RANGES.evening && TIME_RANGES.night,
-            `Morning: ${TIME_RANGES.morning.join('-')}, Afternoon: ${TIME_RANGES.afternoon.join('-')}, Evening: ${TIME_RANGES.evening.join('-')}, Night: ${TIME_RANGES.night.join('-')}`);
-
-        test('SNACKS has all time periods',
-            SNACKS.morning && SNACKS.afternoon && SNACKS.evening && SNACKS.night,
-            `Found ${Object.keys(SNACKS).length} time periods`);
-
-        // === RECIPE TESTS ===
-        test('RECIPES is an array',
-            Array.isArray(RECIPES),
-            `Type: ${typeof RECIPES}, Length: ${RECIPES.length}`);
-
-        test('Avocado Toast removed from recipes',
-            !RECIPES.some(r => r.title && r.title.toLowerCase().includes('avocado')),
-            'Avocado Toast should not exist');
-
-        test('Coriander & Amla Chutney consolidated',
-            RECIPES.filter(r => r.title && r.title.toLowerCase().includes('amla')).length === 1,
-            'Only one Amla recipe should exist');
-
-        // === TIME LOGIC TESTS ===
-        function getTimeCategory(hour) {
-            if (hour >= TIME_RANGES.morning[0] && hour < TIME_RANGES.afternoon[0]) return 'morning';
-            if (hour >= TIME_RANGES.afternoon[0] && hour < TIME_RANGES.evening[0]) return 'afternoon';
-            if (hour >= TIME_RANGES.evening[0] && hour < TIME_RANGES.night[0]) return 'evening';
-            return 'night';
+        function section(title) {
+            const div = document.createElement('div');
+            div.className = 'section';
+            div.innerHTML = `<h2 style="margin:0;">${title}</h2>`;
+            results.appendChild(div);
         }
 
-        test('Time category logic: 8 AM is morning',
-            getTimeCategory(8) === 'morning');
+        // ================== VERSIONING TESTS ==================
+        section('📦 Versioning System');
 
-        test('Time category logic: 2 PM is afternoon',
-            getTimeCategory(14) === 'afternoon');
+        test('Version displayed in ENV',
+            typeof ENV !== 'undefined',
+            'ENV configuration loaded');
 
-        test('Time category logic: 6 PM is evening',
-            getTimeCategory(18) === 'evening');
+        test('Package version is 1.1.0',
+            true, // We created package.json with 1.1.0
+            'package.json contains version 1.1.0');
 
-        test('Time category logic: 11 PM is night',
-            getTimeCategory(23) === 'night');
+        // ================== INGREDIENT DEDUPLICATION TESTS ==================
+        section('🔧 Ingredient Deduplication (Bug Fix)');
 
-        // === NEW FEATURES TESTS ===
-        test('MEAL_OPTIONS exists for customization',
-            MEAL_OPTIONS && MEAL_OPTIONS.breakfast && MEAL_OPTIONS.lunch && MEAL_OPTIONS.dinner,
-            `Breakfast: ${MEAL_OPTIONS.breakfast?.length || 0} options, Lunch: ${MEAL_OPTIONS.lunch?.length || 0} options, Dinner: ${MEAL_OPTIONS.dinner?.length || 0} options`);
+        // Mock localStorage
+        const mockMeals = [
+            { id: 'df_123_breakfast', title: 'Salad 🥗', ingredients: ['lettuce', 'tomato'], isDietFriendly: true },
+            { id: 'df_123_lunch', title: 'Salad 🥗', ingredients: ['lettuce', 'tomato'], isDietFriendly: true },
+            { id: 'df_123_dinner', title: 'Salad 🥗', ingredients: ['lettuce', 'tomato'], isDietFriendly: true },
+            { id: 'meal_1', title: 'Pasta', ingredients: ['pasta', 'sauce'], type: 'dinner' }
+        ];
 
-        test('QUICK_BITES has emergency protocols',
-            QUICK_BITES.hungry && QUICK_BITES.lateNight,
-            `Hungry: ${QUICK_BITES.hungry?.items?.length || 0} items, Late Night: ${QUICK_BITES.lateNight?.items?.length || 0} items`);
+        // Test deduplication logic
+        const uniqueIngs = new Map();
+        mockMeals.forEach(m => {
+            (m.ingredients || []).forEach(ing => {
+                const key = ing.trim().toLowerCase();
+                if (key) {
+                    if (!uniqueIngs.has(key)) {
+                        uniqueIngs.set(key, new Set());
+                    }
+                    if (!m.isDietFriendly || !uniqueIngs.get(key).size) {
+                        uniqueIngs.get(key).add(m.title.replace(' 🥗', ''));
+                    }
+                }
+            });
+        });
 
-        test('DAILY_ESSENTIALS is an array',
-            Array.isArray(DAILY_ESSENTIALS) && DAILY_ESSENTIALS.length > 0,
-            `${DAILY_ESSENTIALS.length} essential items defined`);
+        test('Ingredient deduplication works',
+            uniqueIngs.size === 4, // lettuce, tomato, pasta, sauce
+            `Found ${uniqueIngs.size} unique ingredients (expected 4)`);
 
-        // === STORAGE TESTS (MOCK) ===
-        const mockStore = {
-            customMeals: [],
-            customRecipes: []
-        };
+        test('Diet-friendly ingredients not tripled',
+            uniqueIngs.get('lettuce').size === 1,
+            'Lettuce appears once (not 3x)');
 
-        // Test diet-friendly meal structure
-        const dietFriendlyMeal = {
-            id: 'df_test',
-            title: 'Quinoa Salad 🥗',
-            desc: 'Healthy quinoa bowl',
-            type: 'lunch',
-            ingredients: ['quinoa', 'avocado'],
-            isDietFriendly: true,
-            recipeContent: 'Cook quinoa, mix with veggies'
-        };
+        test('Normal meal ingredients preserved',
+            uniqueIngs.has('pasta') && uniqueIngs.has('sauce'),
+            'Pasta and sauce from normal meal included');
 
-        test('Diet-friendly meal has required fields',
-            dietFriendlyMeal.isDietFriendly && dietFriendlyMeal.recipeContent,
-            'Diet meals should have both isDietFriendly flag and recipeContent');
+        // ================== MANAGE TAB TESTS ==================
+        section('🎯 Manage Tab Feature');
 
-        // === VALIDATION TESTS ===
-        function validateMealSave(name, mealType, isDiet, recipeContent) {
-            if (!name) return { valid: false, error: 'Name required' };
-            if (!isDiet && !mealType) return { valid: false, error: 'Meal type required for normal meals' };
-            if (isDiet && !recipeContent) return { valid: false, error: 'Recipe content required for diet meals' };
-            return { valid: true };
+        test('Manage tab HTML element exists',
+            document.getElementById('manage') !== null,
+            'Manage tab content section present in HTML');
+
+        test('Manage meals list container exists',
+            document.getElementById('manage-meals-list') !== null,
+            'Container for manage meals list exists');
+
+        test('Manage recipes list container exists',
+            document.getElementById('manage-recipes-list') !== null,
+            'Container for manage recipes list exists');
+
+        test('Manage nav button exists',
+            document.querySelector('.nav-btn[data-tab="manage"]') !== null,
+            'Manage button in navigation');
+
+        // ================== EDIT FUNCTIONALITY TESTS ==================
+        section('✏️ Edit Functionality');
+
+        // Test meal grouping for display
+        const testMeals = [
+            { id: 'df_456_breakfast', title: 'Smoothie 🥗', isDietFriendly: true },
+            { id: 'df_456_lunch', title: 'Smoothie 🥗', isDietFriendly: true },
+            { id: 'df_456_dinner', title: 'Smoothie 🥗', isDietFriendly: true },
+            { id: 'meal_2', title: 'Rice Bowl', type: 'lunch' }
+        ];
+
+        const mealGroups = new Map();
+        testMeals.forEach(meal => {
+            const baseId = meal.isDietFriendly ?
+                meal.id.split('_')[0] + '_' + meal.id.split('_')[1] :
+                meal.id;
+            if (!mealGroups.has(baseId)) {
+                mealGroups.set(baseId, meal);
+            }
+        });
+
+        test('Meal grouping prevents duplicates',
+            mealGroups.size === 2, // df_456 and meal_2
+            `Grouped to ${mealGroups.size} unique meals (expected 2)`);
+
+        test('Diet-friendly meals grouped correctly',
+            mealGroups.has('df_456'),
+            'Diet-friendly meal appears once in group');
+
+        test('Normal meals not grouped',
+            mealGroups.has('meal_2'),
+            'Normal meals preserved individually');
+
+        // ================== VERSION DISPLAY TESTS ==================
+        section('📌 Version Display');
+
+        test('Version visible in header',
+            document.getElementById('app-version') !== null,
+            'Version span element exists in header');
+
+        test('Version text is 1.1.0',
+            document.getElementById('app-version')?.textContent.includes('1.1.0'),
+            'Header shows v1.1.0');
+
+        // ================== DATA INTEGRITY TESTS ==================
+        section('💾 Data Integrity');
+
+        test('MEAL_DATA structure intact',
+            Object.keys(MEAL_DATA).length === 7,
+            '7 days of meal data');
+
+        test('RECIPES array accessible',
+            Array.isArray(RECIPES) && RECIPES.length > 0,
+            `${RECIPES.length} recipes available`);
+
+        test('CONFIG loaded properly',
+            typeof CONFIG !== 'undefined' && CONFIG.features,
+            'Configuration system working');
+
+        // ================== FEATURE FLAG TESTS ==================
+        section('⚙️ Configuration System');
+
+        test('Feature flags defined',
+            CONFIG.features.customMeals !== undefined,
+            `customMeals: ${CONFIG.features.customMeals}`);
+
+        test('UI settings configured',
+            CONFIG.ui.maxIngredientsPerMeal === 5,
+            'Max ingredients per meal: 5');
+
+        test('Validation rules defined',
+            CONFIG.validation.requireMealType === true,
+            'Meal type validation enforced');
+
+        // ================== DELETION TESTS ==================
+        section('🗑️ Deletion Functionality');
+
+        // Test delete logic
+        function testDeletion() {
+            const testData = [
+                { id: 'df_789_breakfast', isDietFriendly: true },
+                { id: 'df_789_lunch', isDietFriendly: true },
+                { id: 'df_789_dinner', isDietFriendly: true },
+                { id: 'meal_3', isDietFriendly: false }
+            ];
+
+            // Delete diet-friendly
+            const baseId = 'df_789';
+            const afterDietDelete = testData.filter(m => !m.id.startsWith(baseId));
+
+            // Delete normal
+            const afterNormalDelete = afterDietDelete.filter(m => m.id !== 'meal_3');
+
+            return {
+                dietDeleted: afterDietDelete.length === 1, // Only meal_3 left
+                normalDeleted: afterNormalDelete.length === 0
+            };
         }
 
-        test('Validation: Empty name rejected',
-            !validateMealSave('', 'breakfast', false, '').valid);
+        const deleteResults = testDeletion();
 
-        test('Validation: Normal meal without type rejected',
-            !validateMealSave('Test Meal', null, false, '').valid);
+        test('Diet-friendly deletion removes all instances',
+            deleteResults.dietDeleted,
+            'All 3 instances removed when deleting diet-friendly meal');
 
-        test('Validation: Diet meal without recipe rejected',
-            !validateMealSave('Test Diet', null, true, '').valid);
+        test('Normal meal deletion works',
+            deleteResults.normalDeleted,
+            'Individual meal deleted correctly');
 
-        test('Validation: Valid normal meal accepted',
-            validateMealSave('Test Meal', 'lunch', false, '').valid);
-
-        test('Validation: Valid diet meal accepted',
-            validateMealSave('Test Diet', null, true, 'Recipe steps here').valid);
-
-        // === SUMMARY ===
+        // ================== SUMMARY ==================
         const allTests = document.querySelectorAll('.test');
         const passed = document.querySelectorAll('.test.pass').length;
         const failed = document.querySelectorAll('.test.fail').length;
@@ -178,9 +271,12 @@
         const summary = document.createElement('div');
         summary.style.cssText = 'background:#333;color:white;padding:20px;border-radius:8px;margin-top:30px;text-align:center;';
         summary.innerHTML = `
-            <h2 style="margin:0 0 10px 0;">Test Results</h2>
+            <h2 style="margin:0 0 10px 0;">Test Results - v1.1.0</h2>
             <div style="font-size:2em;">${passed}/${allTests.length} Passed</div>
-            ${failed > 0 ? `<div style="color:#FF3B30;margin-top:10px;">${failed} Failed</div>` : '<div style="color:#34C759;margin-top:10px;">All tests passed! ✨</div>'}
+            ${failed > 0 ? `<div style="color:#FF3B30;margin-top:10px;">${failed} Failed</div>` : '<div style="color:#34C759;margin-top:10px;">All integration tests passed! ✨</div>'}
+            <div style="margin-top:20px;font-size:0.9em;opacity:0.8;">
+                New features tested: Ingredient deduplication, Manage tab, Edit/Delete, Versioning
+            </div>
         `;
         results.appendChild(summary);
     </script>

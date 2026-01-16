@@ -1,0 +1,37 @@
+{
+    "version": "1.1.0",
+    "name": "Nourish Daily",
+    "description": "Smart meal planning and nutrition tracking PWA",
+    "changelog": {
+        "1.1.0": {
+            "type": "minor",
+            "features": [
+                "Manage Meals & Recipes tab with edit/delete functionality",
+                "Fixed ingredient duplication bug (3x issue for diet-friendly meals)",
+                "Semantic versioning system",
+                "Edit functionality for all custom meals and recipes",
+                "Delete confirmation dialogs",
+                "Grouped diet-friendly meal display to prevent duplicates"
+            ],
+            "fixes": [
+                "Ingredient deduplication in Prep tab",
+                "Diet-friendly meals now appear once in Manage tab",
+                "Weekly tab update bug (from v1.0.0)"
+            ],
+            "date": "2026-01-16"
+        },
+        "1.0.0": {
+            "type": "major",
+            "features": [
+                "Initial PWA release",
+                "Dark mode support",
+                "Time-based meal recommendations",
+                "Custom meals and recipes",
+                "Weekly meal planning",
+                "Offline functionality",
+                "GitHub Pages deployment with CI/CD"
+            ],
+            "date": "2026-01-16"
+        }
+    }
+}
