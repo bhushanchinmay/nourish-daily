@@ -612,3 +612,302 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch { return key.includes('used') || key.includes('custom') ? [] : {}; }
     }
     function setStore(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+});
+// ---------- MANAGE TAB ----------
+function initManage() {
+    const mealsContainer = document.getElementById('manage-meals-list');
+    const recipesContainer = document.getElementById('manage-recipes-list');
+    mealsContainer.innerHTML = '';
+    recipesContainer.innerHTML = '';
+
+    // Display custom meals
+    const customMeals = getStore(STORE.customMeals);
+    // Group meals by base ID to avoid showing diet-friendly 3x
+    const mealGroups = new Map();
+    customMeals.forEach(meal => {
+        const baseId = meal.isDietFriendly ? meal.id.split('_')[0] + '_' + meal.id.split('_')[1] : meal.id;
+        if (!mealGroups.has(baseId)) {
+            mealGroups.set(baseId, meal);
+        }
+    });
+
+    if (mealGroups.size === 0) {
+        mealsContainer.innerHTML = '<p style="opacity:0.6">No custom meals yet. Add one using the + button!</p>';
+    } else {
+        mealGroups.forEach(meal => {
+            mealsContainer.appendChild(createManageMealCard(meal));
+        });
+    }
+
+    // Display custom recipes
+    const customRecipes = getStore(STORE.customRecipes);
+    if (customRecipes.length === 0) {
+        recipesContainer.innerHTML = '<p style="opacity:0.6">No custom recipes yet. Add one using the + button!</p>';
+    } else {
+        customRecipes.forEach(recipe => {
+            recipesContainer.appendChild(createManageRecipeCard(recipe));
+        });
+    }
+}
+
+function createManageMealCard(meal) {
+    const card = document.createElement('div');
+    card.className = 'recipe-card';
+    const typeLabel = meal.isDietFriendly ? 'Diet-Friendly (All meals)' : meal.type.charAt(0).toUpperCase() + meal.type.slice(1);
+
+    card.innerHTML = `
+            <div class="recipe-header" style="display: flex; justify-content: space-between; align-items: start;">
+                <div>
+                    <h3>${meal.title}</h3>
+                    <small style="opacity: 0.7;">${typeLabel}</small>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-secondary edit-meal-btn" data-id="${meal.id}" style="padding: 8px 12px;">✏️ Edit</button>
+                    <button class="delete-btn" data-id="${meal.id}" title="Delete">✕</button>
+                </div>
+            </div>
+            <p class="desc">${meal.desc || 'No description'}</p>
+            ${meal.ingredients && meal.ingredients.length > 0 ? `<p style="font-size: 0.85em; opacity: 0.7;"><strong>Ingredients:</strong> ${meal.ingredients.join(', ')}</p>` : ''}
+        `;
+
+    card.querySelector('.edit-meal-btn').onclick = () => editMeal(meal);
+    card.querySelector('.delete-btn').onclick = () => deleteMeal(meal.id, meal.isDietFriendly);
+    return card;
+}
+
+function createManageRecipeCard(recipe) {
+    const card = document.createElement('div');
+    card.className = 'recipe-card';
+
+    card.innerHTML = `
+            <div class="recipe-header" style="display: flex; justify-content: space-between; align-items: start;">
+                <h3>${recipe.title}</h3>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-secondary edit-recipe-btn" data-id="${recipe.id}" style="padding: 8px 12px;">✏️ Edit</button>
+                    <button class="delete-btn" data-id="${recipe.id}" title="Delete">✕</button>
+                </div>
+            </div>
+            <p class="desc">${recipe.desc || 'No description'}</p>
+        `;
+
+    card.querySelector('.edit-recipe-btn').onclick = () => editRecipe(recipe);
+    card.querySelector('.delete-btn').onclick = () => deleteRecipe(recipe.id, recipe.isDietFriendly);
+    return card;
+}
+
+function editMeal(meal) {
+    // Populate add modal with existing data
+    const modal = document.getElementById('add-modal');
+    document.getElementById('add-modal-title').textContent = 'Edit Meal';
+    document.getElementById('add-name').value = meal.title.replace(' 🥗', '');
+    document.getElementById('add-desc').value = meal.desc || '';
+
+    // Set diet-friendly toggle
+    document.querySelectorAll('.diet-option').forEach(b => b.classList.remove('active'));
+    if (meal.isDietFriendly) {
+        document.querySelector('.diet-option[data-value="yes"]').classList.add('active');
+        document.getElementById('meal-type-group').style.display = 'none';
+        document.getElementById('recipe-content-group').style.display = 'block';
+        document.getElementById('add-content').value = meal.recipeContent || '';
+    } else {
+        document.querySelector('.diet-option[data-value="no"]').classList.add('active');
+        document.getElementById('meal-type-group').style.display = 'block';
+        document.getElementById('recipe-content-group').style.display = 'none';
+
+        // Select meal type
+        document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`.type-btn[data-value="${meal.type}"]`)?.classList.add('active');
+    }
+
+    // Populate ingredients
+    const ingContainer = document.getElementById('ingredients-inputs');
+    const showIngBtn = document.getElementById('show-ing-btn');
+    const addIngBtn = document.getElementById('add-ing-btn');
+
+    if (meal.ingredients && meal.ingredients.length > 0) {
+        ingContainer.innerHTML = '';
+        ingContainer.classList.remove('hidden');
+        addIngBtn.classList.remove('hidden');
+        showIngBtn.classList.add('hidden');
+
+        meal.ingredients.forEach(ing => {
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = 'display: flex; gap: 8px; align-items: center; margin-bottom: 8px;';
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'ing-input';
+            input.value = ing;
+            input.style.marginBottom = '0';
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.textContent = '✕';
+            removeBtn.style.cssText = 'background: var(--tint-danger); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-size: 14px; flex-shrink: 0;';
+            removeBtn.onclick = () => wrapper.remove();
+
+            wrapper.appendChild(input);
+            wrapper.appendChild(removeBtn);
+            ingContainer.appendChild(wrapper);
+        });
+    }
+
+    // Change submit to update
+    const submitBtn = document.getElementById('submit-add');
+    submitBtn.textContent = 'Update';
+    submitBtn.onclick = () => updateMeal(meal.id, meal.isDietFriendly);
+
+    modal.classList.remove('hidden');
+}
+
+function editRecipe(recipe) {
+    const modal = document.getElementById('add-modal');
+    document.getElementById('add-modal-title').textContent = 'Edit Recipe';
+    document.getElementById('add-name').value = recipe.title;
+    document.getElementById('add-desc').value = recipe.desc || '';
+    document.getElementById('add-content').value = recipe.content || '';
+
+    // Set to recipe mode
+    document.querySelectorAll('.diet-option').forEach(b => b.classList.remove('active'));
+    document.querySelector('.diet-option[data-value="yes"]').classList.add('active');
+    document.getElementById('meal-type-group').style.display = 'none';
+    document.getElementById('recipe-content-group').style.display = 'block';
+    document.getElementById('ingredients-group').style.display = 'block';
+
+    const submitBtn = document.getElementById('submit-add');
+    submitBtn.textContent = 'Update';
+    submitBtn.onclick = () => updateRecipe(recipe.id);
+
+    modal.classList.remove('hidden');
+}
+
+function updateMeal(oldId, isDietFriendly) {
+    const name = document.getElementById('add-name').value.trim();
+    if (!name) return alert('Name is required');
+
+    const desc = document.getElementById('add-desc').value.trim();
+    const ings = [...document.querySelectorAll('.ing-input')].map(i => i.value.trim()).filter(Boolean);
+
+    const meals = getStore(STORE.customMeals);
+
+    if (isDietFriendly) {
+        // Update all 3 instances
+        const baseId = oldId.split('_')[0] + '_' + oldId.split('_')[1];
+        const content = document.getElementById('add-content').value.trim();
+
+        meals.forEach(m => {
+            if (m.id.startsWith(baseId)) {
+                m.title = `${name} 🥗`;
+                m.desc = desc;
+                m.ingredients = ings;
+                m.recipeContent = content;
+            }
+        });
+
+        // Update recipe too
+        const recipes = getStore(STORE.customRecipes);
+        const recipeIndex = recipes.findIndex(r => r.id.startsWith(baseId));
+        if (recipeIndex !== -1) {
+            recipes[recipeIndex].title = name;
+            recipes[recipeIndex].desc = desc;
+            recipes[recipeIndex].content = content;
+            setStore(STORE.customRecipes, recipes);
+        }
+    } else {
+        const mealIndex = meals.findIndex(m => m.id === oldId);
+        if (mealIndex !== -1) {
+            const activeType = document.querySelector('.type-btn.active');
+            meals[mealIndex].title = name;
+            meals[mealIndex].desc = desc;
+            meals[mealIndex].type = activeType?.dataset.value || meals[mealIndex].type;
+            meals[mealIndex].ingredients = ings;
+        }
+    }
+
+    setStore(STORE.customMeals, meals);
+    initManage();
+    initPrepare();
+    initRecipes();
+    document.getElementById('add-modal').classList.add('hidden');
+    alert('✅ Meal updated successfully!');
+
+    // Reset submit button
+    const submitBtn = document.getElementById('submit-add');
+    submitBtn.textContent = 'Save';
+    setupAddModal(); // Re-setup original save handler
+}
+
+function updateRecipe(oldId) {
+    const name = document.getElementById('add-name').value.trim();
+    if (!name) return alert('Name is required');
+
+    const desc = document.getElementById('add-desc').value.trim();
+    const content = document.getElementById('add-content').value.trim();
+
+    const recipes = getStore(STORE.customRecipes);
+    const index = recipes.findIndex(r => r.id === oldId);
+
+    if (index !== -1) {
+        recipes[index].title = name;
+        recipes[index].desc = desc;
+        recipes[index].content = content;
+        setStore(STORE.customRecipes, recipes);
+    }
+
+    initManage();
+    initRecipes();
+    document.getElementById('add-modal').classList.add('hidden');
+    alert('✅ Recipe updated successfully!');
+
+    // Reset submit button
+    const submitBtn = document.getElementById('submit-add');
+    submitBtn.textContent = 'Save';
+    setupAddModal();
+}
+
+function deleteMeal(id, isDietFriendly) {
+    if (!confirm('Are you sure you want to delete this meal?')) return;
+
+    const meals = getStore(STORE.customMeals);
+
+    if (isDietFriendly) {
+        // Delete all 3 instances
+        const baseId = id.split('_')[0] + '_' + id.split('_')[1];
+        const filtered = meals.filter(m => !m.id.startsWith(baseId));
+        setStore(STORE.customMeals, filtered);
+
+        // Delete from recipes too
+        const recipes = getStore(STORE.customRecipes);
+        const filteredRecipes = recipes.filter(r => !r.id.startsWith(baseId));
+        setStore(STORE.customRecipes, filteredRecipes);
+        initRecipes(); // Refresh recipes tab
+    } else {
+        const filtered = meals.filter(m => m.id !== id);
+        setStore(STORE.customMeals, filtered);
+    }
+
+    initManage(); // Refresh manage tab
+    initPrepare(); // CRITICAL: Refresh Prep tab to remove deleted meal's ingredients
+    alert('✅ Meal deleted successfully!');
+}
+
+function deleteRecipe(id, isDietFriendly) {
+    if (!confirm('Are you sure you want to delete this recipe?')) return;
+
+    const recipes = getStore(STORE.customRecipes);
+    const filtered = recipes.filter(r => r.id !== id);
+    setStore(STORE.customRecipes, filtered);
+
+    // If diet-friendly, also delete from meals
+    if (isDietFriendly) {
+        const meals = getStore(STORE.customMeals);
+        const baseId = id.split('_')[0] + '_' + id.split('_')[1];
+        const filteredMeals = meals.filter(m => !m.id.startsWith(baseId));
+        setStore(STORE.customMeals, filteredMeals);
+        initPrepare();
+    }
+
+    initManage();
+    initRecipes();
+    alert('✅ Recipe deleted successfully!');
+}
