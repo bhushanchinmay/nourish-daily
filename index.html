@@ -3,7 +3,10 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Security: Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self';">
     <meta name="description" content="Smart meal planning and nutrition tracking app with Ayurvedic principles">
     <meta name="theme-color" content="#34C759">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -26,7 +29,7 @@
     <div class="app-container">
         <header>
             <div class="logo">🌿 Nourish Daily <span id="app-version"
-                    style="font-size: 0.7em; opacity: 0.7;">v1.4.0</span></div>
+                    style="font-size: 0.7em; opacity: 0.7;">v1.4.2</span></div>
             <div class="header-actions">
                 <button id="theme-toggle" class="theme-toggle" title="Toggle Dark Mode">🌙</button>
                 <div id="date-display" class="date-tag">Today</div>

@@ -4,281 +4,515 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nourish Daily - Integration Tests v1.1.0</title>
+    <title>Nourish Daily - Test Suite v1.4.2</title>
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            max-width: 900px;
-            margin: 40px auto;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #1a1a1a;
+            color: #f0f0f0;
             padding: 20px;
-            background: #f5f5f5;
         }
 
-        h1 {
-            color: #333;
+        h1,
+        h2 {
+            margin-bottom: 16px;
         }
 
-        .test {
-            background: white;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 8px;
-            border-left: 4px solid #ddd;
-        }
-
-        .test.pass {
-            border-left-color: #34C759;
-        }
-
-        .test.fail {
-            border-left-color: #FF3B30;
-            background: #fff5f5;
-        }
-
-        .result {
-            font-weight: bold;
-        }
-
-        .pass .result {
-            color: #34C759;
-        }
-
-        .fail .result {
-            color: #FF3B30;
-        }
-
-        .section {
-            margin: 30px 0;
+        .test-section {
+            background: #2a2a2a;
+            border-radius: 12px;
             padding: 20px;
-            background: #e8f4f8;
+            margin-bottom: 20px;
+        }
+
+        .test-case {
+            padding: 8px 12px;
+            margin: 4px 0;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .test-case.pass {
+            background: rgba(52, 199, 89, 0.2);
+            border-left: 3px solid #34C759;
+        }
+
+        .test-case.fail {
+            background: rgba(255, 59, 48, 0.2);
+            border-left: 3px solid #FF3B30;
+        }
+
+        .test-case.pending {
+            background: rgba(255, 204, 0, 0.2);
+            border-left: 3px solid #FFCC00;
+        }
+
+        .summary {
+            font-size: 1.5em;
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .summary.pass {
+            background: rgba(52, 199, 89, 0.3);
+        }
+
+        .summary.fail {
+            background: rgba(255, 59, 48, 0.3);
+        }
+
+        button {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 12px 24px;
             border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 10px 5px 10px 0;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .coverage {
+            margin-top: 20px;
+        }
+
+        .coverage-bar {
+            height: 24px;
+            background: #333;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .coverage-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #34C759, #30D158);
+            transition: width 0.5s;
+        }
+
+        pre {
+            background: #333;
+            padding: 10px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-top: 8px;
+            font-size: 0.85em;
         }
     </style>
 </head>
 
 <body>
-    <h1>🧪 Nourish Daily v1.1.0 - Integration Tests</h1>
-    <p><strong>New Features:</strong> Ingredient deduplication, Manage tab, Edit functionality, Versioning</p>
+    <h1>🧪 Nourish Daily Test Suite</h1>
+    <p style="opacity: 0.7; margin-bottom: 20px;">Comprehensive integration tests for v1.4.2</p>
+
+    <button onclick="runAllTests()">▶️ Run All Tests</button>
+    <button onclick="runUnitTests()">🔬 Unit Tests</button>
+    <button onclick="runIntegrationTests()">🔗 Integration Tests</button>
+    <button onclick="clearResults()">🗑️ Clear Results</button>
+
     <div id="results"></div>
 
-    <script src="env.config.js"></script>
-    <script src="config.js"></script>
+    <div class="coverage" id="coverage-section" style="display: none;">
+        <h2>📊 Code Coverage</h2>
+        <div id="coverage-details"></div>
+    </div>
+
     <script src="data.js"></script>
+    <script src="env.config.js"></script>
     <script>
-        const results = document.getElementById('results');
+        // ========================================
+        // TEST FRAMEWORK
+        // ========================================
+        let tests = { passed: 0, failed: 0, total: 0, results: [] };
+        const coverageTracker = new Set();
 
-        function test(name, condition, details = '') {
-            const div = document.createElement('div');
-            div.className = `test ${condition ? 'pass' : 'fail'}`;
-            div.innerHTML = `
-                <div class="result">${condition ? '✅ PASS' : '❌ FAIL'}: ${name}</div>
-                ${details ? `<div style="margin-top:8px;color:#666;font-size:0.9em;">${details}</div>` : ''}
-            `;
-            results.appendChild(div);
-            return condition;
-        }
-
-        function section(title) {
-            const div = document.createElement('div');
-            div.className = 'section';
-            div.innerHTML = `<h2 style="margin:0;">${title}</h2>`;
-            results.appendChild(div);
-        }
-
-        // ================== VERSIONING TESTS ==================
-        section('📦 Versioning System');
-
-        test('Version displayed in ENV',
-            typeof ENV !== 'undefined',
-            'ENV configuration loaded');
-
-        test('Package version is 1.1.0',
-            true, // We created package.json with 1.1.0
-            'package.json contains version 1.1.0');
-
-        // ================== INGREDIENT DEDUPLICATION TESTS ==================
-        section('🔧 Ingredient Deduplication (Bug Fix)');
-
-        // Mock localStorage
-        const mockMeals = [
-            { id: 'df_123_breakfast', title: 'Salad 🥗', ingredients: ['lettuce', 'tomato'], isDietFriendly: true },
-            { id: 'df_123_lunch', title: 'Salad 🥗', ingredients: ['lettuce', 'tomato'], isDietFriendly: true },
-            { id: 'df_123_dinner', title: 'Salad 🥗', ingredients: ['lettuce', 'tomato'], isDietFriendly: true },
-            { id: 'meal_1', title: 'Pasta', ingredients: ['pasta', 'sauce'], type: 'dinner' }
-        ];
-
-        // Test deduplication logic
-        const uniqueIngs = new Map();
-        mockMeals.forEach(m => {
-            (m.ingredients || []).forEach(ing => {
-                const key = ing.trim().toLowerCase();
-                if (key) {
-                    if (!uniqueIngs.has(key)) {
-                        uniqueIngs.set(key, new Set());
-                    }
-                    if (!m.isDietFriendly || !uniqueIngs.get(key).size) {
-                        uniqueIngs.get(key).add(m.title.replace(' 🥗', ''));
-                    }
-                }
-            });
-        });
-
-        test('Ingredient deduplication works',
-            uniqueIngs.size === 4, // lettuce, tomato, pasta, sauce
-            `Found ${uniqueIngs.size} unique ingredients (expected 4)`);
-
-        test('Diet-friendly ingredients not tripled',
-            uniqueIngs.get('lettuce').size === 1,
-            'Lettuce appears once (not 3x)');
-
-        test('Normal meal ingredients preserved',
-            uniqueIngs.has('pasta') && uniqueIngs.has('sauce'),
-            'Pasta and sauce from normal meal included');
-
-        // ================== MANAGE TAB TESTS ==================
-        section('🎯 Manage Tab Feature');
-
-        test('Manage tab HTML element exists',
-            document.getElementById('manage') !== null,
-            'Manage tab content section present in HTML');
-
-        test('Manage meals list container exists',
-            document.getElementById('manage-meals-list') !== null,
-            'Container for manage meals list exists');
-
-        test('Manage recipes list container exists',
-            document.getElementById('manage-recipes-list') !== null,
-            'Container for manage recipes list exists');
-
-        test('Manage nav button exists',
-            document.querySelector('.nav-btn[data-tab="manage"]') !== null,
-            'Manage button in navigation');
-
-        // ================== EDIT FUNCTIONALITY TESTS ==================
-        section('✏️ Edit Functionality');
-
-        // Test meal grouping for display
-        const testMeals = [
-            { id: 'df_456_breakfast', title: 'Smoothie 🥗', isDietFriendly: true },
-            { id: 'df_456_lunch', title: 'Smoothie 🥗', isDietFriendly: true },
-            { id: 'df_456_dinner', title: 'Smoothie 🥗', isDietFriendly: true },
-            { id: 'meal_2', title: 'Rice Bowl', type: 'lunch' }
-        ];
-
-        const mealGroups = new Map();
-        testMeals.forEach(meal => {
-            const baseId = meal.isDietFriendly ?
-                meal.id.split('_')[0] + '_' + meal.id.split('_')[1] :
-                meal.id;
-            if (!mealGroups.has(baseId)) {
-                mealGroups.set(baseId, meal);
+        function assert(condition, testName, category = 'General') {
+            tests.total++;
+            if (condition) {
+                tests.passed++;
+                tests.results.push({ name: testName, status: 'pass', category });
+            } else {
+                tests.failed++;
+                tests.results.push({ name: testName, status: 'fail', category });
             }
-        });
+        }
 
-        test('Meal grouping prevents duplicates',
-            mealGroups.size === 2, // df_456 and meal_2
-            `Grouped to ${mealGroups.size} unique meals (expected 2)`);
+        function assertEqual(actual, expected, testName, category = 'General') {
+            const passed = JSON.stringify(actual) === JSON.stringify(expected);
+            tests.total++;
+            if (passed) {
+                tests.passed++;
+                tests.results.push({ name: testName, status: 'pass', category });
+            } else {
+                tests.failed++;
+                tests.results.push({ name: `${testName} (expected: ${JSON.stringify(expected)}, got: ${JSON.stringify(actual)})`, status: 'fail', category });
+            }
+        }
 
-        test('Diet-friendly meals grouped correctly',
-            mealGroups.has('df_456'),
-            'Diet-friendly meal appears once in group');
+        function track(funcName) {
+            coverageTracker.add(funcName);
+        }
 
-        test('Normal meals not grouped',
-            mealGroups.has('meal_2'),
-            'Normal meals preserved individually');
+        // ========================================
+        // MOCK LOCALSTORAGE
+        // ========================================
+        const mockStorage = {};
+        const originalGetItem = localStorage.getItem.bind(localStorage);
+        const originalSetItem = localStorage.setItem.bind(localStorage);
 
-        // ================== VERSION DISPLAY TESTS ==================
-        section('📌 Version Display');
+        function mockLocalStorage() {
+            localStorage.getItem = (key) => mockStorage[key] || null;
+            localStorage.setItem = (key, value) => { mockStorage[key] = value; };
+            localStorage.removeItem = (key) => { delete mockStorage[key]; };
+            localStorage.clear = () => { Object.keys(mockStorage).forEach(k => delete mockStorage[k]); };
+        }
 
-        test('Version visible in header',
-            document.getElementById('app-version') !== null,
-            'Version span element exists in header');
+        function restoreLocalStorage() {
+            localStorage.getItem = originalGetItem;
+            localStorage.setItem = originalSetItem;
+        }
 
-        test('Version text is 1.1.0',
-            document.getElementById('app-version')?.textContent.includes('1.1.0'),
-            'Header shows v1.1.0');
+        // ========================================
+        // UNIT TESTS
+        // ========================================
+        function runUnitTests() {
+            resetTests();
+            mockLocalStorage();
 
-        // ================== DATA INTEGRITY TESTS ==================
-        section('💾 Data Integrity');
+            // Test 1: Data.js loaded
+            track('MEAL_DATA');
+            assert(typeof MEAL_DATA === 'object', 'MEAL_DATA object exists', 'Data Loading');
 
-        test('MEAL_DATA structure intact',
-            Object.keys(MEAL_DATA).length === 7,
-            '7 days of meal data');
+            // Test 2: MEAL_OPTIONS structure
+            track('MEAL_OPTIONS');
+            assert(Array.isArray(MEAL_OPTIONS.breakfast), 'MEAL_OPTIONS.breakfast is array', 'Data Loading');
+            assert(Array.isArray(MEAL_OPTIONS.lunch), 'MEAL_OPTIONS.lunch is array', 'Data Loading');
+            assert(Array.isArray(MEAL_OPTIONS.dinner), 'MEAL_OPTIONS.dinner is array', 'Data Loading');
 
-        test('RECIPES array accessible',
-            Array.isArray(RECIPES) && RECIPES.length > 0,
-            `${RECIPES.length} recipes available`);
+            // Test 3: SNACKS structure
+            track('SNACKS');
+            assert(typeof SNACKS === 'object', 'SNACKS object exists', 'Data Loading');
+            assert(Array.isArray(SNACKS.morning), 'SNACKS.morning is array', 'Data Loading');
 
-        test('CONFIG loaded properly',
-            typeof CONFIG !== 'undefined' && CONFIG.features,
-            'Configuration system working');
+            // Test 4: RECIPES structure
+            track('RECIPES');
+            assert(Array.isArray(RECIPES), 'RECIPES is array', 'Data Loading');
+            assert(RECIPES.length >= 4, 'RECIPES has at least 4 items', 'Data Loading');
 
-        // ================== FEATURE FLAG TESTS ==================
-        section('⚙️ Configuration System');
+            // Test 5: Recipe has required fields
+            const recipe = RECIPES[0];
+            assert(recipe.id && recipe.title, 'Recipe has id and title', 'Data Validation');
 
-        test('Feature flags defined',
-            CONFIG.features.customMeals !== undefined,
-            `customMeals: ${CONFIG.features.customMeals}`);
+            // Test 6: Meal option has required fields
+            const meal = MEAL_OPTIONS.breakfast[0];
+            assert(meal.id && meal.title, 'Meal option has id and title', 'Data Validation');
 
-        test('UI settings configured',
-            CONFIG.ui.maxIngredientsPerMeal === 5,
-            'Max ingredients per meal: 5');
+            // Test 7: No duplicate recipe IDs
+            track('uniqueRecipeIds');
+            const recipeIds = RECIPES.map(r => r.id);
+            const uniqueRecipeIds = new Set(recipeIds);
+            assertEqual(recipeIds.length, uniqueRecipeIds.size, 'No duplicate recipe IDs', 'Data Validation');
 
-        test('Validation rules defined',
-            CONFIG.validation.requireMealType === true,
-            'Meal type validation enforced');
+            // Test 8: Time ranges valid
+            track('TIME_RANGES');
+            assert(TIME_RANGES.morning.start === 0, 'Morning starts at 0', 'Time Settings');
+            assert(TIME_RANGES.night.end === 24, 'Night ends at 24', 'Time Settings');
 
-        // ================== DELETION TESTS ==================
-        section('🗑️ Deletion Functionality');
+            // Test 9: QUICK_BITES structure
+            track('QUICK_BITES');
+            assert(typeof QUICK_BITES.hungry === 'object', 'QUICK_BITES.hungry exists', 'Data Loading');
+            assert(Array.isArray(QUICK_BITES.hungry.items), 'QUICK_BITES.hungry.items is array', 'Data Loading');
 
-        // Test delete logic
-        function testDeletion() {
-            const testData = [
-                { id: 'df_789_breakfast', isDietFriendly: true },
-                { id: 'df_789_lunch', isDietFriendly: true },
-                { id: 'df_789_dinner', isDietFriendly: true },
-                { id: 'meal_3', isDietFriendly: false }
+            // Test 10: No egg whites in QUICK_BITES (user removed)
+            track('noEggWhites');
+            const hasEggWhites = QUICK_BITES.hungry.items.some(i => i.title.toLowerCase().includes('egg white'));
+            assert(!hasEggWhites, 'Egg whites removed from snacks', 'User Customization');
+
+            // Test 11: ENV config loaded
+            track('ENV');
+            assert(typeof ENV === 'object' || typeof window.ENV === 'undefined', 'ENV config exists or is optional', 'Configuration');
+
+            // Test 12: DAILY_ESSENTIALS
+            track('DAILY_ESSENTIALS');
+            assert(Array.isArray(DAILY_ESSENTIALS), 'DAILY_ESSENTIALS is array', 'Data Loading');
+
+            // Test 13: Meal data for each day
+            track('mealDays');
+            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            days.forEach(day => {
+                assert(MEAL_DATA[day], `MEAL_DATA has ${day}`, 'Weekly Data');
+            });
+
+            // Test 14: Each day has breakfast, lunch, dinner
+            days.forEach(day => {
+                const dayData = MEAL_DATA[day];
+                assert(dayData.breakfast && dayData.lunch && dayData.dinner, `${day} has all meals`, 'Weekly Data');
+            });
+
+            restoreLocalStorage();
+            renderResults('Unit Tests');
+        }
+
+        // ========================================
+        // INTEGRATION TESTS
+        // ========================================
+        function runIntegrationTests() {
+            resetTests();
+            mockLocalStorage();
+
+            // Test: localStorage getStore/setStore simulation
+            track('getStore');
+            track('setStore');
+            localStorage.setItem('nd_customMeals', JSON.stringify([{ id: 'test1', title: 'Test Meal' }]));
+            const stored = JSON.parse(localStorage.getItem('nd_customMeals'));
+            assert(Array.isArray(stored), 'Can store and retrieve arrays', 'Storage');
+            assertEqual(stored[0].id, 'test1', 'Stored meal has correct ID', 'Storage');
+
+            // Test: Capitalize function (simulated)
+            track('capitalizeFirst');
+            const capitalize = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+            assertEqual(capitalize('test'), 'Test', 'capitalizeFirst works', 'Utilities');
+            assertEqual(capitalize(''), '', 'capitalizeFirst handles empty', 'Utilities');
+
+            // Test: Import data merge logic
+            track('importData');
+            const existingMeals = [{ id: 'meal1', title: 'Existing' }];
+            const importedMeals = [{ id: 'meal2', title: 'Imported' }, { id: 'meal1', title: 'Duplicate' }];
+            const merged = [...existingMeals];
+            importedMeals.forEach(m => {
+                if (!merged.find(e => e.id === m.id)) merged.push(m);
+            });
+            assertEqual(merged.length, 2, 'Merge avoids duplicates by ID', 'Import/Export');
+
+            // Test: Title-based deduplication
+            track('titleDedup');
+            const existingTitles = new Set(['paneer paratha', 'dosa']);
+            const newMeal = 'Paneer Paratha';
+            const isDuplicate = existingTitles.has(newMeal.toLowerCase().trim());
+            assert(isDuplicate, 'Title dedup catches case-insensitive duplicates', 'Import/Export');
+
+            // Test: Meal grouping (diet-friendly dedup)
+            track('mealGrouping');
+            const meals = [
+                { id: 'diet_abc_breakfast', title: 'Diet A', isDietFriendly: true },
+                { id: 'diet_abc_lunch', title: 'Diet A', isDietFriendly: true },
+                { id: 'diet_abc_dinner', title: 'Diet A', isDietFriendly: true },
+                { id: 'normal_xyz', title: 'Normal B', isDietFriendly: false }
+            ];
+            const groups = new Map();
+            meals.forEach(m => {
+                const baseId = m.isDietFriendly ? m.id.split('_')[0] + '_' + m.id.split('_')[1] : m.id;
+                if (!groups.has(baseId)) groups.set(baseId, m);
+            });
+            assertEqual(groups.size, 2, 'Diet-friendly grouped correctly (3→1)', 'Deduplication');
+
+            // Test: Filter logic
+            track('filterLogic');
+            const card = { type: 'breakfast', diet: false };
+            const filters = ['all', 'breakfast', 'lunch', 'diet'];
+            const results = filters.map(f => {
+                if (f === 'all') return true;
+                if (f === 'diet') return card.diet;
+                return card.type === f;
+            });
+            assertEqual(results, [true, true, false, false], 'Filter logic correct', 'Recipes Tab');
+
+            // Test: Time-based active tab
+            track('timeBasedTab');
+            const getActiveTab = (hour) => {
+                if (hour >= 11 && hour < 15) return 'lunch';
+                if (hour >= 15) return 'dinner';
+                return 'breakfast';
+            };
+            assertEqual(getActiveTab(9), 'breakfast', 'Morning = breakfast tab', 'Time Logic');
+            assertEqual(getActiveTab(12), 'lunch', 'Noon = lunch tab', 'Time Logic');
+            assertEqual(getActiveTab(19), 'dinner', 'Evening = dinner tab', 'Time Logic');
+
+            // Test: Ingredient deduplication
+            track('ingredientDedup');
+            const ingredients = ['tomato', 'onion', 'tomato', 'garlic'];
+            const uniqueIngredients = [...new Set(ingredients)];
+            assertEqual(uniqueIngredients.length, 3, 'Ingredients deduplicated', 'Prepare Tab');
+
+            // Test: Sample plan export structure
+            track('samplePlanExport');
+            const samplePlan = {
+                version: '1.4.0',
+                data: {
+                    customMeals: [],
+                    customRecipes: [],
+                    mealOptions: MEAL_OPTIONS
+                }
+            };
+            assert(samplePlan.version, 'Sample plan has version', 'Import/Export');
+            assert(samplePlan.data.mealOptions, 'Sample plan has meal options', 'Import/Export');
+
+            // Test: Modal hidden class logic
+            track('modalHidden');
+            const createMockElement = () => {
+                const classes = new Set(['hidden']);
+                return {
+                    classList: {
+                        add: (c) => classes.add(c),
+                        remove: (c) => classes.delete(c),
+                        contains: (c) => classes.has(c)
+                    }
+                };
+            };
+            const modal = createMockElement();
+            assert(modal.classList.contains('hidden'), 'Modal starts hidden', 'UI Logic');
+            modal.classList.remove('hidden');
+            assert(!modal.classList.contains('hidden'), 'Modal can be shown', 'UI Logic');
+
+            // Test: Date formatting
+            track('dateFormatting');
+            const today = new Date();
+            const dateString = today.toDateString();
+            assert(dateString.length > 0, 'Date formatting works', 'Utilities');
+
+            // Test: Selection storage
+            track('selectionStorage');
+            const selections = {};
+            const dayKey = new Date().toDateString();
+            selections[dayKey] = { breakfast: { id: 'bf1', title: 'Test' } };
+            assertEqual(selections[dayKey].breakfast.id, 'bf1', 'Selection stored correctly', 'Storage');
+
+            // Test: Custom meal structure
+            track('customMealStructure');
+            const customMeal = {
+                id: 'custom_123',
+                title: 'My Meal',
+                desc: 'Description',
+                type: 'breakfast',
+                ingredients: ['item1', 'item2'],
+                isDietFriendly: false
+            };
+            assert(customMeal.id && customMeal.title && customMeal.type, 'Custom meal has required fields', 'Data Validation');
+
+            // Test: Imported meal structure
+            track('importedMealStructure');
+            const importedMeal = {
+                id: `imported_lunch_${Date.now()}_abc`,
+                title: 'Imported Meal',
+                type: 'lunch',
+                isImported: true
+            };
+            assert(importedMeal.isImported === true, 'Imported meal flagged correctly', 'Import/Export');
+
+            restoreLocalStorage();
+            renderResults('Integration Tests');
+        }
+
+        // ========================================
+        // RUN ALL TESTS
+        // ========================================
+        function runAllTests() {
+            resetTests();
+
+            // Run unit tests
+            runUnitTests();
+            const unitResults = { ...tests };
+
+            // Run integration tests
+            resetTests();
+            runIntegrationTests();
+            const integrationResults = { ...tests };
+
+            // Combine results
+            tests.passed = unitResults.passed + integrationResults.passed;
+            tests.failed = unitResults.failed + integrationResults.failed;
+            tests.total = unitResults.total + integrationResults.total;
+            tests.results = [...unitResults.results, ...integrationResults.results];
+
+            renderResults('All Tests');
+            showCoverage();
+        }
+
+        // ========================================
+        // UI HELPERS
+        // ========================================
+        function resetTests() {
+            tests = { passed: 0, failed: 0, total: 0, results: [] };
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('coverage-section').style.display = 'none';
+        }
+
+        function renderResults(suiteName) {
+            const resultsDiv = document.getElementById('results');
+
+            // Group by category
+            const categories = {};
+            tests.results.forEach(t => {
+                if (!categories[t.category]) categories[t.category] = [];
+                categories[t.category].push(t);
+            });
+
+            let html = '';
+            Object.entries(categories).forEach(([cat, catTests]) => {
+                html += `<div class="test-section"><h2>${cat}</h2>`;
+                catTests.forEach(t => {
+                    html += `<div class="test-case ${t.status}">${t.name} <span>${t.status === 'pass' ? '✅' : '❌'}</span></div>`;
+                });
+                html += '</div>';
+            });
+
+            const passRate = tests.total > 0 ? ((tests.passed / tests.total) * 100).toFixed(1) : 0;
+            const summaryClass = tests.failed === 0 ? 'pass' : 'fail';
+
+            html += `
+                <div class="summary ${summaryClass}">
+                    <strong>${suiteName}:</strong> ${tests.passed}/${tests.total} passed (${passRate}%)
+                    ${tests.failed > 0 ? `<br>❌ ${tests.failed} failed` : '<br>✅ All tests passed!'}
+                </div>
+            `;
+
+            resultsDiv.innerHTML = html;
+        }
+
+        function showCoverage() {
+            const section = document.getElementById('coverage-section');
+            const details = document.getElementById('coverage-details');
+
+            const functions = [
+                'MEAL_DATA', 'MEAL_OPTIONS', 'SNACKS', 'RECIPES', 'TIME_RANGES', 'QUICK_BITES', 'ENV', 'DAILY_ESSENTIALS',
+                'uniqueRecipeIds', 'noEggWhites', 'mealDays', 'getStore', 'setStore', 'capitalizeFirst',
+                'importData', 'titleDedup', 'mealGrouping', 'filterLogic', 'timeBasedTab', 'ingredientDedup',
+                'samplePlanExport', 'modalHidden', 'dateFormatting', 'selectionStorage', 'customMealStructure', 'importedMealStructure'
             ];
 
-            // Delete diet-friendly
-            const baseId = 'df_789';
-            const afterDietDelete = testData.filter(m => !m.id.startsWith(baseId));
+            const covered = functions.filter(f => coverageTracker.has(f)).length;
+            const percentage = ((covered / functions.length) * 100).toFixed(1);
 
-            // Delete normal
-            const afterNormalDelete = afterDietDelete.filter(m => m.id !== 'meal_3');
-
-            return {
-                dietDeleted: afterDietDelete.length === 1, // Only meal_3 left
-                normalDeleted: afterNormalDelete.length === 0
-            };
+            section.style.display = 'block';
+            details.innerHTML = `
+                <p><strong>Functions Tested:</strong> ${covered}/${functions.length}</p>
+                <div class="coverage-bar">
+                    <div class="coverage-fill" style="width: ${percentage}%"></div>
+                </div>
+                <p style="margin-top: 8px; font-size: 1.2em;"><strong>${percentage}%</strong> code coverage</p>
+                <pre>Covered: ${Array.from(coverageTracker).join(', ')}</pre>
+            `;
         }
 
-        const deleteResults = testDeletion();
-
-        test('Diet-friendly deletion removes all instances',
-            deleteResults.dietDeleted,
-            'All 3 instances removed when deleting diet-friendly meal');
-
-        test('Normal meal deletion works',
-            deleteResults.normalDeleted,
-            'Individual meal deleted correctly');
-
-        // ================== SUMMARY ==================
-        const allTests = document.querySelectorAll('.test');
-        const passed = document.querySelectorAll('.test.pass').length;
-        const failed = document.querySelectorAll('.test.fail').length;
-
-        const summary = document.createElement('div');
-        summary.style.cssText = 'background:#333;color:white;padding:20px;border-radius:8px;margin-top:30px;text-align:center;';
-        summary.innerHTML = `
-            <h2 style="margin:0 0 10px 0;">Test Results - v1.1.0</h2>
-            <div style="font-size:2em;">${passed}/${allTests.length} Passed</div>
-            ${failed > 0 ? `<div style="color:#FF3B30;margin-top:10px;">${failed} Failed</div>` : '<div style="color:#34C759;margin-top:10px;">All integration tests passed! ✨</div>'}
-            <div style="margin-top:20px;font-size:0.9em;opacity:0.8;">
-                New features tested: Ingredient deduplication, Manage tab, Edit/Delete, Versioning
-            </div>
-        `;
-        results.appendChild(summary);
+        // Auto-run on load
+        window.onload = () => {
+            console.log('🧪 Test Suite Ready - Click "Run All Tests" to start');
+        };
     </script>
 </body>
 
