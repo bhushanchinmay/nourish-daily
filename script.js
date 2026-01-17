@@ -426,6 +426,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const resetBtn = document.getElementById('reset-btn');
 
         btn.onclick = () => {
+            // Render custom options (from imports)
+            renderOptions('breakfast');
+            renderOptions('lunch');
+            renderOptions('dinner');
+
             populateOptions();
 
             // Determine active tab based on time (issue #9)
@@ -465,13 +470,6 @@ document.addEventListener('DOMContentLoaded', () => {
             loadMeals();
             initWeekly(); // Refresh Weekly tab to show updated meals
             modal.classList.add('hidden');
-        };
-
-        // Render options when opening modal
-        document.getElementById('customize-btn').onclick = () => {
-            renderOptions('breakfast');
-            renderOptions('lunch');
-            renderOptions('dinner');
         };
 
         resetBtn.onclick = () => {
