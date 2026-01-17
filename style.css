@@ -832,7 +832,8 @@ label {
     color: #0277BD;
 }
 
-.meal-card {
+/* Recipe list meal cards only (not Today tab) */
+#recipe-list .meal-card {
     background: var(--bg-tertiary);
     border-radius: var(--radius);
     padding: 16px;
@@ -844,23 +845,23 @@ label {
     /* Prevents overflow */
 }
 
-.meal-card:hover {
+#recipe-list .meal-card:hover {
     transform: translateY(-2px);
 }
 
-.meal-card h3 {
+#recipe-list .meal-card h3 {
     margin: 0 0 8px 0;
     font-size: 1.1em;
     word-wrap: break-word;
 }
 
-.meal-card .desc {
+#recipe-list .meal-card .desc {
     color: var(--text-secondary);
     font-size: 0.9em;
     margin: 0 0 8px 0;
 }
 
-.meal-card .content {
+#recipe-list .meal-card .content {
     font-size: 0.85em;
     padding-top: 8px;
     border-top: 1px solid var(--separator);

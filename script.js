@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const STORE = {
         selections: 'nd_selections',
         used: 'nd_used_meals',
+        usedBreakfast: 'nd_used_breakfast',
+        usedLunch: 'nd_used_lunch',
+        usedDinner: 'nd_used_dinner',
         week: 'nd_week_start',
         customMeals: 'nd_custom_meals',
         customRecipes: 'nd_custom_recipes',
