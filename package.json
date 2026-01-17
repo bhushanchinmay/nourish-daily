@@ -1,22 +1,82 @@
 {
     "version": "1.4.4",
     "name": "Nourish Daily",
-    "description": "Smart meal planning and nutrition tracking PWA",
+    "description": "Smart meal planning and nutrition tracking PWA with Ayurvedic principles",
     "changelog": {
+        "1.4.4": {
+            "type": "minor",
+            "features": [
+                "Version-based cache busting for service worker",
+                "Update notification toast when new version available",
+                "Network-first caching for HTML files",
+                "Automatic old cache cleanup"
+            ],
+            "date": "2026-01-17"
+        },
+        "1.4.3": {
+            "type": "patch",
+            "fixes": [
+                "Fixed Customize button crash (missing STORE keys)",
+                "Fixed Today tab layout (CSS specificity)",
+                "Added usedBreakfast/usedLunch/usedDinner to STORE"
+            ],
+            "date": "2026-01-17"
+        },
+        "1.4.2": {
+            "type": "minor",
+            "features": [
+                "Comprehensive test suite with 85%+ coverage",
+                "Unit tests and integration tests",
+                "Content Security Policy for security",
+                "XSS sanitization function"
+            ],
+            "date": "2026-01-17"
+        },
+        "1.4.1": {
+            "type": "patch",
+            "fixes": [
+                "Recipe card layout with proper CSS grid",
+                "Import now adds meals to Recipes tab",
+                "Title-based deduplication for imports"
+            ],
+            "date": "2026-01-17"
+        },
+        "1.4.0": {
+            "type": "minor",
+            "features": [
+                "Unified 'All Meals & Recipes' tab",
+                "Filter buttons (All, Breakfast, Lunch, Dinner, Diet-Friendly)",
+                "Visual tags with icons for meal types",
+                "Combined view of all meal options"
+            ],
+            "date": "2026-01-17"
+        },
+        "1.3.1": {
+            "type": "patch",
+            "fixes": [
+                "Removed '2 Boiled Egg Whites' from snacks",
+                "Fixed customize button ID reference",
+                "Shortened manage tab button labels"
+            ],
+            "date": "2026-01-17"
+        },
+        "1.2.0": {
+            "type": "minor",
+            "features": [
+                "Import/Export functionality",
+                "Download Sample Plan button",
+                "Ingredient capitalization",
+                "Dynamic UI refresh after adding meals"
+            ],
+            "date": "2026-01-17"
+        },
         "1.1.0": {
             "type": "minor",
             "features": [
-                "Manage Meals & Recipes tab with edit/delete functionality",
-                "Fixed ingredient duplication bug (3x issue for diet-friendly meals)",
+                "Manage Meals & Recipes tab",
+                "Edit/delete functionality for custom items",
                 "Semantic versioning system",
-                "Edit functionality for all custom meals and recipes",
-                "Delete confirmation dialogs",
-                "Grouped diet-friendly meal display to prevent duplicates"
-            ],
-            "fixes": [
-                "Ingredient deduplication in Prep tab",
-                "Diet-friendly meals now appear once in Manage tab",
-                "Weekly tab update bug (from v1.0.0)"
+                "Fixed ingredient deduplication"
             ],
             "date": "2026-01-16"
         },
@@ -24,12 +84,9 @@
             "type": "major",
             "features": [
                 "Initial PWA release",
-                "Dark mode support",
-                "Time-based meal recommendations",
+                "Dark mode, time-based recommendations",
                 "Custom meals and recipes",
-                "Weekly meal planning",
-                "Offline functionality",
-                "GitHub Pages deployment with CI/CD"
+                "Offline functionality via service worker"
             ],
             "date": "2026-01-16"
         }
