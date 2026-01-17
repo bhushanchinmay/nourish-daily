@@ -1141,15 +1141,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function exportData() {
+        // Combine default MEAL_OPTIONS with custom meals for complete backup
+        const allMeals = {
+            breakfast: [...(MEAL_OPTIONS.breakfast || []), ...getStore(STORE.customMeals).filter(m => m.type === 'breakfast')],
+            lunch: [...(MEAL_OPTIONS.lunch || []), ...getStore(STORE.customMeals).filter(m => m.type === 'lunch')],
+            dinner: [...(MEAL_OPTIONS.dinner || []), ...getStore(STORE.customMeals).filter(m => m.type === 'dinner')]
+        };
+
         const data = {
-            version: '1.5.0',
+            version: '1.5.1',
             exportDate: new Date().toISOString(),
             appName: 'Nourish Daily',
-            description: 'Full backup of your meal data and selections',
+            description: 'Complete meal plan backup - edit and reimport anytime',
             data: {
+                mealOptions: allMeals,
                 customMeals: getStore(STORE.customMeals),
                 customRecipes: getStore(STORE.customRecipes),
-                selections: getStore(STORE.selections),
                 used_breakfast: getStore(STORE.usedBreakfast),
                 used_lunch: getStore(STORE.usedLunch),
                 used_dinner: getStore(STORE.usedDinner)
@@ -1166,8 +1173,9 @@ document.addEventListener('DOMContentLoaded', () => {
         a.click();
         URL.revokeObjectURL(url);
 
-        const itemCount = data.data.customMeals.length + data.data.customRecipes.length;
-        alert(`✅ Data exported!\n\n${itemCount} items saved to:\n${a.download}`);
+        const mealCount = allMeals.breakfast.length + allMeals.lunch.length + allMeals.dinner.length;
+        const recipeCount = data.data.customRecipes.length;
+        alert(`✅ Backup exported!\\n\\n${mealCount} meals + ${recipeCount} recipes\\n\\nEdit the JSON and reimport anytime.`);
     }
 
     function importData(file) {

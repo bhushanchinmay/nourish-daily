@@ -1,7 +1,7 @@
 {
   "name": "Nourish Daily",
   "short_name": "Nourish",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Smart meal planning and nutrition tracking app with Ayurvedic principles",
   "start_url": "/nourish-daily/",
   "display": "standalone",
