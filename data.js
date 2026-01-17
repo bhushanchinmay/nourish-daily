@@ -138,7 +138,6 @@ const QUICK_BITES = {
         items: [
             { title: "Besan Chilla", desc: "5-min protein fix" },
             { title: "Curd + Cucumber Raita", desc: "Instant, low effort" },
-            { title: "2 Boiled Egg Whites", desc: "Ready in 10 min" },
             { title: "Peanut Butter Toast", desc: "Multigrain + 1 tbsp PB" }
         ]
     },
