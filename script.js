@@ -369,6 +369,13 @@ document.addEventListener('DOMContentLoaded', () => {
             modal.classList.add('hidden');
         };
 
+        // Render options when opening modal
+        document.getElementById('customize-today').onclick = () => {
+            renderOptions('breakfast');
+            renderOptions('lunch');
+            renderOptions('dinner');
+        };
+
         resetBtn.onclick = () => {
             const selections = getStore(STORE.selections);
             delete selections[today.toDateString()];
