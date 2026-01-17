@@ -261,11 +261,109 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById('recipe-list');
         container.innerHTML = '';
 
-        // Default recipes
-        RECIPES.forEach(r => container.appendChild(createRecipeCard(r)));
+        // Collect ALL meals from all sources
+        const allMeals = [];
 
-        // Custom recipes
-        getStore(STORE.customRecipes).forEach(r => container.appendChild(createRecipeCard(r, true)));
+        // Add default meal options with type tag
+        ['breakfast', 'lunch', 'dinner'].forEach(type => {
+            (MEAL_OPTIONS[type] || []).forEach(meal => {
+                allMeals.push({ ...meal, mealType: type, isDefault: true });
+            });
+        });
+
+        // Add default recipes (diet-friendly)
+        RECIPES.forEach(r => {
+            allMeals.push({ ...r, mealType: 'diet', isDietFriendly: true, isDefault: true });
+        });
+
+        // Add custom meals
+        getStore(STORE.customMeals).forEach(meal => {
+            // Avoid duplicates from diet-friendly meals (appear 3x)
+            if (meal.isDietFriendly) {
+                const baseId = meal.id.split('_')[0] + '_' + meal.id.split('_')[1];
+                if (!allMeals.find(m => m.id && m.id.startsWith(baseId))) {
+                    allMeals.push({ ...meal, mealType: 'diet' });
+                }
+            } else {
+                allMeals.push(meal);
+            }
+        });
+
+        // Add custom recipes
+        getStore(STORE.customRecipes).forEach(r => {
+            if (!allMeals.find(m => m.id === r.id)) {
+                allMeals.push({ ...r, mealType: 'diet', isDietFriendly: true });
+            }
+        });
+
+        // Render all meals
+        allMeals.forEach(meal => container.appendChild(createMealCard(meal)));
+
+        // Setup filter buttons
+        setupRecipeFilters();
+    }
+
+    function setupRecipeFilters() {
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const filter = btn.dataset.filter;
+
+                document.querySelectorAll('#recipe-list .meal-card').forEach(card => {
+                    const type = card.dataset.type;
+                    const isDiet = card.dataset.diet === 'true';
+
+                    if (filter === 'all') {
+                        card.style.display = 'block';
+                    } else if (filter === 'diet') {
+                        card.style.display = isDiet ? 'block' : 'none';
+                    } else {
+                        card.style.display = type === filter ? 'block' : 'none';
+                    }
+                });
+            };
+        });
+    }
+
+    function createMealCard(meal) {
+        const card = document.createElement('div');
+        card.className = 'meal-card recipe-card';
+        card.dataset.type = meal.mealType || meal.type || 'other';
+        card.dataset.diet = meal.isDietFriendly ? 'true' : 'false';
+
+        // Build tag badges
+        let tags = '';
+        const typeIcons = { breakfast: '🌅', lunch: '☀️', dinner: '🌙', diet: '🥗' };
+        const typeLabels = { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', diet: 'Recipe' };
+
+        const mealType = meal.mealType || meal.type;
+        if (mealType) {
+            tags += `<span class="tag tag-${mealType}">${typeIcons[mealType] || ''} ${typeLabels[mealType] || mealType}</span>`;
+        }
+        if (meal.isDietFriendly) {
+            tags += `<span class="tag tag-diet">🥗 Diet-Friendly</span>`;
+        }
+        if (!meal.isDefault) {
+            tags += `<span class="tag tag-custom">✨ Custom</span>`;
+        }
+
+        // Build content
+        let contentHtml = '';
+        if (meal.content) {
+            contentHtml = `<div class="content">${meal.content}</div>`;
+        } else if (meal.ingredients && meal.ingredients.length) {
+            contentHtml = `<div class="content"><strong>Ingredients:</strong> ${meal.ingredients.map(i => capitalizeFirst(i)).join(', ')}</div>`;
+        }
+
+        card.innerHTML = `
+            <div class="tags-row">${tags}</div>
+            <h3>${meal.title}</h3>
+            <p class="desc">${meal.desc || ''}</p>
+            ${contentHtml}
+        `;
+
+        return card;
     }
 
     function createRecipeCard(recipe, isCustom = false) {

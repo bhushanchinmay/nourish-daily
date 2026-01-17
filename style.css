@@ -766,3 +766,97 @@ label {
     font-size: 0.85rem;
     color: var(--text-secondary);
 }
+/* --- FILTER BUTTONS --- */
+.filter-btn {
+    padding: 6px 14px;
+    border: 1px solid var(--separator);
+    border-radius: 20px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+    background: var(--tint-primary);
+    color: white;
+    border-color: var(--tint-primary);
+}
+
+.filter-btn.active {
+    background: var(--tint-primary);
+    color: white;
+    border-color: var(--tint-primary);
+}
+
+/* --- MEAL TAGS --- */
+.tags-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    font-weight: 500;
+}
+
+.tag-breakfast {
+    background: #FFE5B4;
+    color: #8B4513;
+}
+
+.tag-lunch {
+    background: #FFF9C4;
+    color: #8D6E63;
+}
+
+.tag-dinner {
+    background: #E1BEE7;
+    color: #6A1B9A;
+}
+
+.tag-diet {
+    background: #C8E6C9;
+    color: #2E7D32;
+}
+
+.tag-custom {
+    background: #B3E5FC;
+    color: #0277BD;
+}
+
+.meal-card {
+    background: var(--bg-tertiary);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.2s ease;
+}
+
+.meal-card:hover {
+    transform: translateY(-2px);
+}
+
+.meal-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 1.1em;
+}
+
+.meal-card .desc {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    margin: 0 0 8px 0;
+}
+
+.meal-card .content {
+    font-size: 0.85em;
+    padding-top: 8px;
+    border-top: 1px solid var(--separator);
+    color: var(--text-secondary);
+}

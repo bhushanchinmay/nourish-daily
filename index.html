@@ -26,7 +26,7 @@
     <div class="app-container">
         <header>
             <div class="logo">🌿 Nourish Daily <span id="app-version"
-                    style="font-size: 0.7em; opacity: 0.7;">v1.3.1</span></div>
+                    style="font-size: 0.7em; opacity: 0.7;">v1.4.0</span></div>
             <div class="header-actions">
                 <button id="theme-toggle" class="theme-toggle" title="Toggle Dark Mode">🌙</button>
                 <div id="date-display" class="date-tag">Today</div>
@@ -128,8 +128,15 @@
         <!-- ===== RECIPES TAB ===== -->
         <main id="recipes" class="tab-content">
             <div class="hero-card">
-                <h1>Recipes</h1>
-                <p>Diets & Instructions</p>
+                <h1>All Meals & Recipes</h1>
+                <p>Browse all meal options with recipes</p>
+                <div style="display: flex; gap: 8px; margin-top: 12px; justify-content: center; flex-wrap: wrap;">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="breakfast">🌅 Breakfast</button>
+                    <button class="filter-btn" data-filter="lunch">☀️ Lunch</button>
+                    <button class="filter-btn" data-filter="dinner">🌙 Dinner</button>
+                    <button class="filter-btn" data-filter="diet">🥗 Diet-Friendly</button>
+                </div>
             </div>
             <div id="recipe-list" class="recipe-grid"></div>
         </main>
