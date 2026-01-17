@@ -87,10 +87,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const todayKey = today.toDateString();
         const custom = selections[todayKey] || {};
         const defaults = MEAL_DATA[dayKey];
+        const customMeals = getStore(STORE.customMeals);
 
-        const bf = custom.breakfast || defaults?.breakfast;
-        const ln = custom.lunch || defaults?.lunch;
-        const dn = custom.dinner || defaults?.dinner;
+        // Helper to validate if a selection still exists
+        function isValidSelection(meal) {
+            if (!meal || !meal.id) return false;
+            // Default meals (from MEAL_DATA) are always valid
+            if (!meal.id.startsWith('cm_') && !meal.id.startsWith('df_') && !meal.id.startsWith('imported_')) {
+                return true;
+            }
+            // Custom meals need to exist in customMeals store
+            return customMeals.some(m => m.id === meal.id);
+        }
+
+        // Use selection if valid, otherwise fall back to default
+        const bf = isValidSelection(custom.breakfast) ? custom.breakfast : defaults?.breakfast;
+        const ln = isValidSelection(custom.lunch) ? custom.lunch : defaults?.lunch;
+        const dn = isValidSelection(custom.dinner) ? custom.dinner : defaults?.dinner;
 
         if (bf) updateMealCard('breakfast', bf);
         if (ln) updateMealCard('lunch', ln);
@@ -1073,16 +1086,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // ---------- IMPORT/EXPORT DATA ----------
     function setupImportExport() {
         const exportBtn = document.getElementById('export-data-btn');
-        const downloadSampleBtn = document.getElementById('download-sample-btn');
         const importBtn = document.getElementById('import-data-btn');
         const fileInput = document.getElementById('import-file-input');
 
         if (exportBtn) {
             exportBtn.onclick = exportData;
-        }
-
-        if (downloadSampleBtn) {
-            downloadSampleBtn.onclick = downloadSamplePlan;
         }
 
         if (importBtn && fileInput) {
@@ -1134,12 +1142,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function exportData() {
         const data = {
-            version: '1.2.0',
+            version: '1.5.0',
             exportDate: new Date().toISOString(),
             appName: 'Nourish Daily',
+            description: 'Full backup of your meal data and selections',
             data: {
                 customMeals: getStore(STORE.customMeals),
                 customRecipes: getStore(STORE.customRecipes),
+                selections: getStore(STORE.selections),
                 used_breakfast: getStore(STORE.usedBreakfast),
                 used_lunch: getStore(STORE.usedLunch),
                 used_dinner: getStore(STORE.usedDinner)
@@ -1215,6 +1225,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (imported.data.used_breakfast) setStore(STORE.usedBreakfast, imported.data.used_breakfast);
                 if (imported.data.used_lunch) setStore(STORE.usedLunch, imported.data.used_lunch);
                 if (imported.data.used_dinner) setStore(STORE.usedDinner, imported.data.used_dinner);
+
+                // Import selections (user's meal choices per day)
+                if (imported.data.selections) {
+                    const currentSelections = getStore(STORE.selections);
+                    const mergedSelections = { ...currentSelections, ...imported.data.selections };
+                    setStore(STORE.selections, mergedSelections);
+                }
 
                 // Import mealOptions as custom meals (adds to Recipes tab)
                 let importedMealsCount = 0;

@@ -2,9 +2,9 @@
 
 **Smart meal planning and nutrition tracking web app with Ayurvedic principles**
 
-A installable Web App for managing daily meals, recipes, and meal planning with time-based recommendations, customization, and offline support.
+A Progressive Web App for managing daily meals, recipes, and meal planning with time-based recommendations, customization, and offline support.
 
-![Version](https://img.shields.io/badge/version-1.4.4-green)
+![Version](https://img.shields.io/badge/version-1.5.0-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![PWA](https://img.shields.io/badge/installable-yes-purple)
 ![Tests](https://img.shields.io/badge/tests-90%25_coverage-brightgreen)
@@ -17,7 +17,7 @@ A installable Web App for managing daily meals, recipes, and meal planning with 
 ## ✨ Features
 
 ### Core Features
-- 📱 **Installable Web App** - Add to home screen on mobile & desktop
+- 📱 **Progressive Web App** - Add to home screen on mobile & desktop
 - 🌙 **Dark Mode** - Eye-friendly interface with toggle
 - ⏰ **Time-Based Logic** - Meal recommendations based on current time
 - 💾 **Offline Mode** - Works without internet via service worker
@@ -30,8 +30,8 @@ A installable Web App for managing daily meals, recipes, and meal planning with 
 - 🔍 **Unified Recipes View** - Filter by breakfast, lunch, dinner, or diet-friendly
 
 ### Data Management
-- 📥 **Import Data** - Upload JSON backups with deduplication
-- 📋 **Sample Plan** - Download example meal plan
+- 📤 **Export Data** - Download all meals, recipes, and selections as JSON
+- 📥 **Import Data** - Restore backups with full data recovery
 - 🗑️ **Ingredient Management** - Add/remove individual ingredients
 
 ### Security & Technical
@@ -142,6 +142,12 @@ See [SECURITY.md](SECURITY.md) for details.
 ---
 
 ## 📜 Changelog
+
+### v1.5.0 (2026-01-17) - Export & Data Persistence
+- 📤 Export button to download all user data
+- 🔄 Import now restores meal selections
+- 🐛 Fixed deleted meals appearing in Today tab
+- 🧪 Selection validation tests added
 
 ### v1.4.4 (2026-01-17) - Security & Quality
 - 🔒 Input sanitization on all user inputs

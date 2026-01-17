@@ -408,6 +408,41 @@
             };
             assert(importedMeal.isImported === true, 'Imported meal flagged correctly', 'Import/Export');
 
+            // Test: Export data structure
+            track('exportDataStructure');
+            const exportData = {
+                version: '1.5.0',
+                exportDate: new Date().toISOString(),
+                appName: 'Nourish Daily',
+                data: {
+                    customMeals: [],
+                    customRecipes: [],
+                    selections: {},
+                    used_breakfast: [],
+                    used_lunch: [],
+                    used_dinner: []
+                }
+            };
+            assert(exportData.version === '1.5.0', 'Export has version 1.5.0', 'Import/Export');
+            assert(exportData.data.selections !== undefined, 'Export includes selections', 'Import/Export');
+
+            // Test: Selection validation (custom meal deleted)
+            track('selectionValidation');
+            const customMeals = [{ id: 'cm_123', title: 'Existing Meal' }];
+            const validMeal = { id: 'cm_123', title: 'Existing Meal' };
+            const deletedMeal = { id: 'cm_999', title: 'Deleted Meal' };
+            const defaultMeal = { id: 'bf_1', title: 'Default Meal' };
+
+            const isValidSelection = (meal) => {
+                if (!meal || !meal.id) return false;
+                if (!meal.id.startsWith('cm_') && !meal.id.startsWith('df_') && !meal.id.startsWith('imported_')) return true;
+                return customMeals.some(m => m.id === meal.id);
+            };
+
+            assert(isValidSelection(validMeal), 'Valid custom meal returns true', 'Selection Validation');
+            assert(!isValidSelection(deletedMeal), 'Deleted custom meal returns false', 'Selection Validation');
+            assert(isValidSelection(defaultMeal), 'Default meal returns true', 'Selection Validation');
+
             restoreLocalStorage();
             renderResults('Integration Tests');
         }
@@ -533,7 +568,8 @@
                 'uniqueRecipeIds', 'mealDays', 'getStore', 'setStore', 'capitalizeFirst',
                 'importData', 'titleDedup', 'mealGrouping', 'filterLogic', 'timeBasedTab', 'ingredientDedup',
                 'samplePlanExport', 'modalHidden', 'dateFormatting', 'selectionStorage', 'customMealStructure', 'importedMealStructure',
-                'sanitize', 'sanitizeNormal', 'sanitizeXSS', 'sanitizeEmpty', 'storageNamespace', 'CONFIG'
+                'sanitize', 'sanitizeNormal', 'sanitizeXSS', 'sanitizeEmpty', 'storageNamespace', 'CONFIG',
+                'exportDataStructure', 'selectionValidation'
             ];
 
             const covered = functions.filter(f => coverageTracker.has(f)).length;

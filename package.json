@@ -1,8 +1,21 @@
 {
-    "version": "1.4.4",
+    "version": "1.5.0",
     "name": "Nourish Daily",
     "description": "Smart meal planning and nutrition tracking PWA with Ayurvedic principles",
     "changelog": {
+        "1.5.0": {
+            "type": "minor",
+            "features": [
+                "Export button to download all user data (meals, recipes, selections)",
+                "Import restores selections (meal choices per day)",
+                "Selection validation prevents stale/deleted meals showing in Today tab"
+            ],
+            "fixes": [
+                "Fixed deleted custom meals appearing in Today tab",
+                "Fixed data persistence on app updates"
+            ],
+            "date": "2026-01-17"
+        },
         "1.4.4": {
             "type": "minor",
             "features": [
