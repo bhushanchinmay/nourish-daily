@@ -370,7 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         // Render options when opening modal
-        document.getElementById('customize-today').onclick = () => {
+        document.getElementById('customize-btn').onclick = () => {
             renderOptions('breakfast');
             renderOptions('lunch');
             renderOptions('dinner');
