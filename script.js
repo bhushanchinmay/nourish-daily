@@ -222,13 +222,20 @@ document.addEventListener('DOMContentLoaded', () => {
             group.style.display = 'block';
             uniqueIngs.forEach((titles, ing) => {
                 const titleList = Array.from(titles).join(', ');
-                const text = `${ing} (${titleList})`;
+                // Capitalize first letter only
+                const displayIng = capitalizeFirst(ing);
+                const text = `${displayIng} (${titleList})`;
                 const id = `cing_${ing.replace(/\s/g, '_')}`;
                 container.appendChild(createCheckItem(id, text));
             });
         } else {
             group.style.display = 'none';
         }
+    }
+
+    function capitalizeFirst(str) {
+        if (!str) return '';
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
     }
 
     function createCheckItem(id, text) {
@@ -583,9 +590,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 setStore(STORE.customMeals, meals);
 
-                initRecipes();
+                // Dynamic refresh - no page reload needed!
                 initPrepare();
-                alert(`✅ Diet-friendly "${name}" added to all meal options!`);
+                initRecipes();
+                initManage();
+
+                alert(`✅ "${name}" added as diet-friendly meal!`);
             } else {
                 // Normal meal
                 const activeType = document.querySelector('.type-btn.active');
@@ -595,7 +605,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const meals = getStore(STORE.customMeals);
                 meals.push({ id: `cm_${Date.now()}`, title: name, desc, type: mType, ingredients: ings });
                 setStore(STORE.customMeals, meals);
+
+                // Dynamic refresh
                 initPrepare();
+                initManage();
 
                 alert(`✅ "${name}" added successfully!`);
             }
@@ -914,4 +927,141 @@ document.addEventListener('DOMContentLoaded', () => {
         initToday(); //  Refresh Today tab
         alert('✅ Recipe deleted successfully!');
     }
+
+    // ---------- IMPORT/EXPORT DATA ----------
+    function setupImportExport() {
+        const exportBtn = document.getElementById('export-data-btn');
+        const importBtn = document.getElementById('import-data-btn');
+        const fileInput = document.getElementById('import-file-input');
+
+        if (exportBtn) {
+            exportBtn.onclick = exportData;
+        }
+
+        if (importBtn && fileInput) {
+            importBtn.onclick = () => fileInput.click();
+            fileInput.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) importData(file);
+                fileInput.value = ''; // Reset for re-import
+            };
+        }
+    }
+
+    function exportData() {
+        const data = {
+            version: '1.2.0',
+            exportDate: new Date().toISOString(),
+            appName: 'Nourish Daily',
+            data: {
+                customMeals: getStore(STORE.customMeals),
+                customRecipes: getStore(STORE.customRecipes),
+                used_breakfast: getStore(STORE.usedBreakfast),
+                used_lunch: getStore(STORE.usedLunch),
+                used_dinner: getStore(STORE.usedDinner)
+            }
+        };
+
+        const json = JSON.stringify(data, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const dateStr = new Date().toISOString().split('T')[0];
+        a.href = url;
+        a.download = `nourish-daily-backup-${dateStr}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        const itemCount = data.data.customMeals.length + data.data.customRecipes.length;
+        alert(`✅ Data exported!\n\n${itemCount} items saved to:\n${a.download}`);
+    }
+
+    function importData(file) {
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            try {
+                const imported = JSON.parse(e.target.result);
+
+                // Validate structure
+                if (!imported.data || !imported.version) {
+                    throw new Error('Invalid backup file format');
+                }
+
+                // Confirm with user
+                const itemCount = (imported.data.customMeals?.length || 0) +
+                    (imported.data.customRecipes?.length || 0);
+
+                const action = confirm(
+                    `Import ${itemCount} items from backup?\n\n` +
+                    `✅ MERGE: Keep existing data and add imported items\n` +
+                    `❌ CANCEL: Keep current data unchanged\n\n` +
+                    `Click OK to MERGE, Cancel to abort.`
+                );
+
+                if (!action) {
+                    alert('Import cancelled.');
+                    return;
+                }
+
+                // Merge data
+                const currentMeals = getStore(STORE.customMeals);
+                const currentRecipes = getStore(STORE.customRecipes);
+
+                // Merge avoiding duplicates by ID
+                const mergedMeals = [...currentMeals];
+                (imported.data.customMeals || []).forEach(meal => {
+                    if (!mergedMeals.find(m => m.id === meal.id)) {
+                        mergedMeals.push(meal);
+                    }
+                });
+
+                const mergedRecipes = [...currentRecipes];
+                (imported.data.customRecipes || []).forEach(recipe => {
+                    if (!mergedRecipes.find(r => r.id === recipe.id)) {
+                        mergedRecipes.push(recipe);
+                    }
+                });
+
+                // Save merged data
+                setStore(STORE.customMeals, mergedMeals);
+                setStore(STORE.customRecipes, mergedRecipes);
+
+                // Also import used meals if available
+                if (imported.data.used_breakfast) setStore(STORE.usedBreakfast, imported.data.used_breakfast);
+                if (imported.data.used_lunch) setStore(STORE.usedLunch, imported.data.used_lunch);
+                if (imported.data.used_dinner) setStore(STORE.usedDinner, imported.data.used_dinner);
+
+                // Refresh all tabs
+                initToday();
+                initWeekly();
+                initPrepare();
+                initRecipes();
+                initManage();
+
+                const added = (mergedMeals.length - currentMeals.length) +
+                    (mergedRecipes.length - currentRecipes.length);
+
+                alert(
+                    `✅ Data imported successfully!\n\n` +
+                    `${added} new items added\n` +
+                    `Total: ${mergedMeals.length} meals, ${mergedRecipes.length} recipes`
+                );
+
+            } catch (error) {
+                alert(`❌ Import failed: ${error.message}\n\nPlease check the file and try again.`);
+                console.error('Import error:', error);
+            }
+        };
+
+        reader.onerror = () => {
+            alert('❌ Error reading file. Please try again.');
+        };
+
+        reader.readAsText(file);
+    }
+
+    // Initialize import/export
+    setupImportExport();
+
 });
