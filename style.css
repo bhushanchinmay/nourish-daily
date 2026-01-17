@@ -766,6 +766,7 @@ label {
     font-size: 0.85rem;
     color: var(--text-secondary);
 }
+
 /* --- FILTER BUTTONS --- */
 .filter-btn {
     padding: 6px 14px;
@@ -837,6 +838,10 @@ label {
     padding: 16px;
     box-shadow: var(--card-shadow);
     transition: transform 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    /* Prevents overflow */
 }
 
 .meal-card:hover {
@@ -846,6 +851,7 @@ label {
 .meal-card h3 {
     margin: 0 0 8px 0;
     font-size: 1.1em;
+    word-wrap: break-word;
 }
 
 .meal-card .desc {
@@ -859,4 +865,13 @@ label {
     padding-top: 8px;
     border-top: 1px solid var(--separator);
     color: var(--text-secondary);
+    word-wrap: break-word;
+}
+
+/* Recipe grid - proper layout */
+#recipe-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    padding: 16px 0;
 }

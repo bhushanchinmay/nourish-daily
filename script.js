@@ -763,12 +763,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // ---------- MANAGE TAB ----------
     function initManage() {
         const mealsContainer = document.getElementById('manage-meals-list');
-        const recipesContainer = document.getElementById('manage-recipes-list');
         mealsContainer.innerHTML = '';
-        recipesContainer.innerHTML = '';
 
-        // Display custom meals
+        // Get all custom meals
         const customMeals = getStore(STORE.customMeals);
+        const customRecipes = getStore(STORE.customRecipes);
+
         // Group meals by base ID to avoid showing diet-friendly 3x
         const mealGroups = new Map();
         customMeals.forEach(meal => {
@@ -778,21 +778,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // Also add custom recipes that aren't diet-friendly duplicates
+        customRecipes.forEach(recipe => {
+            if (!mealGroups.has(recipe.id)) {
+                mealGroups.set(recipe.id, { ...recipe, isDietFriendly: true });
+            }
+        });
+
         if (mealGroups.size === 0) {
-            mealsContainer.innerHTML = '<p style="opacity:0.6">No custom meals yet. Add one using the + button!</p>';
+            mealsContainer.innerHTML = '<p style="opacity:0.6; grid-column: 1/-1;">No custom meals yet. Add one using the + button!</p>';
         } else {
             mealGroups.forEach(meal => {
                 mealsContainer.appendChild(createManageMealCard(meal));
-            });
-        }
-
-        // Display custom recipes
-        const customRecipes = getStore(STORE.customRecipes);
-        if (customRecipes.length === 0) {
-            recipesContainer.innerHTML = '<p style="opacity:0.6">No custom recipes yet. Add one using the + button!</p>';
-        } else {
-            customRecipes.forEach(recipe => {
-                recipesContainer.appendChild(createManageRecipeCard(recipe));
             });
         }
     }
@@ -1207,25 +1204,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (imported.data.used_lunch) setStore(STORE.usedLunch, imported.data.used_lunch);
                 if (imported.data.used_dinner) setStore(STORE.usedDinner, imported.data.used_dinner);
 
-                // Import meal options (adds to customization modal)
+                // Import mealOptions as custom meals (adds to Recipes tab)
+                let importedMealsCount = 0;
                 if (imported.data.mealOptions) {
-                    const customOptions = getStore('customMealOptions') || { breakfast: [], lunch: [], dinner: [] };
+                    const existingMeals = getStore(STORE.customMeals);
+                    const existingTitles = new Set(existingMeals.map(m => m.title.toLowerCase().trim()));
+
+                    // Also check default MEAL_OPTIONS titles
+                    ['breakfast', 'lunch', 'dinner'].forEach(type => {
+                        (MEAL_OPTIONS[type] || []).forEach(m => {
+                            existingTitles.add(m.title.toLowerCase().trim());
+                        });
+                    });
 
                     ['breakfast', 'lunch', 'dinner'].forEach(mealType => {
                         const importedOptions = imported.data.mealOptions[mealType] || [];
-                        const existing = customOptions[mealType] || [];
 
-                        // Merge avoiding duplicates by ID
                         importedOptions.forEach(option => {
-                            if (!existing.find(o => o.id === option.id)) {
-                                existing.push(option);
+                            const titleLower = option.title.toLowerCase().trim();
+
+                            // Skip if title already exists (deduplication by title)
+                            if (!existingTitles.has(titleLower)) {
+                                existingMeals.push({
+                                    id: `imported_${mealType}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+                                    title: option.title,
+                                    desc: option.desc || '',
+                                    type: mealType,
+                                    ingredients: option.ingredients || [],
+                                    isImported: true
+                                });
+                                existingTitles.add(titleLower);
+                                importedMealsCount++;
                             }
                         });
-
-                        customOptions[mealType] = existing;
                     });
 
-                    setStore('customMealOptions', customOptions);
+                    setStore(STORE.customMeals, existingMeals);
                 }
 
                 // Refresh all tabs
@@ -1238,16 +1252,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const added = (mergedMeals.length - currentMeals.length) +
                     (mergedRecipes.length - currentRecipes.length);
 
-                const optionsAdded = imported.data.mealOptions ?
-                    (imported.data.mealOptions.breakfast?.length || 0) +
-                    (imported.data.mealOptions.lunch?.length || 0) +
-                    (imported.data.mealOptions.dinner?.length || 0) : 0;
-
                 alert(
                     `✅ Data imported successfully!\n\n` +
-                    `${added} new items added\n` +
-                    `${optionsAdded} meal options added to customize menu\n` +
-                    `Total: ${mergedMeals.length} meals, ${mergedRecipes.length} recipes`
+                    `${importedMealsCount} new meals added to Recipes\n` +
+                    `${added} custom items merged\n` +
+                    `Total: ${mergedMeals.length + importedMealsCount} meals`
                 );
 
             } catch (error) {
