@@ -4,7 +4,7 @@
 // CONFIG NOTE: These values are hardcoded because service workers
 // run in a separate context and cannot import from config.js.
 // Keep in sync with: package.json version, env.config.js basePath
-const CACHE_VERSION = 'v1.5.1';
+const CACHE_VERSION = 'v1.6.0';
 const CACHE_NAME = `nourish-daily-${CACHE_VERSION}`;
 const BASE_PATH = '/nourish-daily/';
 

@@ -4,7 +4,7 @@
 
 A Progressive Web App for managing daily meals, recipes, and meal planning with time-based recommendations, customization, and offline support.
 
-![Version](https://img.shields.io/badge/version-1.5.1-green)
+![Version](https://img.shields.io/badge/version-1.6.0-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![PWA](https://img.shields.io/badge/installable-yes-purple)
 ![Tests](https://img.shields.io/badge/tests-90%25_coverage-brightgreen)
@@ -142,6 +142,11 @@ See [SECURITY.md](SECURITY.md) for details.
 ---
 
 ## 📜 Changelog
+
+### v1.6.0 (2026-01-17) - Simplified Add Meal Form
+- 🍽️ Always show meal type selector (Breakfast/Lunch/Dinner)
+- 🥗 Diet-friendly option now just adds a tag
+- 📋 Single unified form for all meals
 
 ### v1.5.1 (2026-01-17) - Improved Export
 - 📤 Export includes all meal options (editable backup)

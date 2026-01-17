@@ -1,8 +1,18 @@
 {
-    "version": "1.5.1",
+    "version": "1.6.0",
     "name": "Nourish Daily",
     "description": "Smart meal planning and nutrition tracking PWA with Ayurvedic principles",
     "changelog": {
+        "1.6.0": {
+            "type": "minor",
+            "features": [
+                "Simplified Add Meal form - always show meal type selector",
+                "Diet-friendly option now just adds 🥗 tag (no special form)",
+                "Single meal per type (not all 3 meal types)",
+                "Cleaner unified form for all meal types"
+            ],
+            "date": "2026-01-17"
+        },
         "1.5.1": {
             "type": "patch",
             "features": [

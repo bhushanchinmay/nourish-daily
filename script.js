@@ -623,15 +623,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Only FAB opens modal now
         fab.onclick = () => openAddModal();
 
-        // Diet-friendly toggle buttons
+        // Diet-friendly toggle buttons (only changes flag, no visibility changes)
         document.querySelectorAll('.diet-option').forEach(btn => {
             btn.onclick = () => {
                 document.querySelectorAll('.diet-option').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-
-                const isDiet = btn.dataset.value === 'yes';
-                mealTypeGroup.style.display = isDiet ? 'none' : 'block';
-                recipeContentGroup.style.display = isDiet ? 'block' : 'none';
+                // Note: Diet-friendly just adds a tag, same form for all meals
             };
         });
 
@@ -719,57 +716,33 @@ document.addEventListener('DOMContentLoaded', () => {
             const isDiet = document.querySelector('.diet-option.active')?.dataset.value === 'yes';
             const ings = [...document.querySelectorAll('.ing-input')].map(i => sanitize(i.value.trim())).filter(Boolean);
 
-            if (isDiet) {
-                // Diet-friendly meal/recipe
-                const rawContent = document.getElementById('add-content').value.trim();
-                if (!rawContent) return alert('Please add recipe steps/instructions for diet-friendly meals');
-                const content = sanitize(rawContent);
+            // Always require meal type selection
+            const activeType = document.querySelector('.type-btn.active');
+            if (!activeType) return alert('Please select a meal type (Breakfast, Lunch, or Dinner)');
+            const mType = activeType.dataset.value;
 
-                // Save as BOTH meal and recipe
-                const id = `df_${Date.now()}`;
+            // Create meal object with isDietFriendly flag
+            const meal = {
+                id: isDiet ? `df_${Date.now()}` : `cm_${Date.now()}`,
+                title: isDiet ? `${name} 🥗` : name,
+                desc,
+                type: mType,
+                ingredients: ings,
+                isDietFriendly: isDiet
+            };
 
-                // Add to recipes for display in Recipes tab
-                const recipes = getStore(STORE.customRecipes);
-                recipes.push({ id, title: name, desc, content, isDietFriendly: true });
-                setStore(STORE.customRecipes, recipes);
+            // Save meal
+            const meals = getStore(STORE.customMeals);
+            meals.push(meal);
+            setStore(STORE.customMeals, meals);
 
-                // Also add to all meal types so it appears in customization for any meal
-                const meals = getStore(STORE.customMeals);
-                ['breakfast', 'lunch', 'dinner'].forEach(type => {
-                    meals.push({
-                        id: `${id}_${type}`,
-                        title: `${name} 🥗`,
-                        desc,
-                        type,
-                        ingredients: ings,
-                        isDietFriendly: true,
-                        recipeContent: content
-                    });
-                });
-                setStore(STORE.customMeals, meals);
+            // Dynamic refresh
+            initPrepare();
+            initRecipes();
+            initManage();
 
-                // Dynamic refresh - no page reload needed!
-                initPrepare();
-                initRecipes();
-                initManage();
-
-                alert(`✅ "${name}" added as diet-friendly meal!`);
-            } else {
-                // Normal meal
-                const activeType = document.querySelector('.type-btn.active');
-                if (!activeType) return alert('Please select a meal type (Breakfast, Lunch, or Dinner)');
-                const mType = activeType.dataset.value;
-
-                const meals = getStore(STORE.customMeals);
-                meals.push({ id: `cm_${Date.now()}`, title: name, desc, type: mType, ingredients: ings });
-                setStore(STORE.customMeals, meals);
-
-                // Dynamic refresh
-                initPrepare();
-                initManage();
-
-                alert(`✅ "${name}" added successfully!`);
-            }
+            const mealKind = isDiet ? 'diet-friendly meal' : 'meal';
+            alert(`✅ "${name}" added as ${mType} ${mealKind}!`);
             modal.classList.add('hidden');
         };
     }
@@ -875,18 +848,13 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.diet-option').forEach(b => b.classList.remove('active'));
         if (meal.isDietFriendly) {
             document.querySelector('.diet-option[data-value="yes"]').classList.add('active');
-            document.getElementById('meal-type-group').style.display = 'none';
-            document.getElementById('recipe-content-group').style.display = 'block';
-            document.getElementById('add-content').value = meal.recipeContent || '';
         } else {
             document.querySelector('.diet-option[data-value="no"]').classList.add('active');
-            document.getElementById('meal-type-group').style.display = 'block';
-            document.getElementById('recipe-content-group').style.display = 'none';
-
-            // Select meal type
-            document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
-            document.querySelector(`.type-btn[data-value="${meal.type}"]`)?.classList.add('active');
         }
+
+        // Always show meal type group and select meal type
+        document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`.type-btn[data-value="${meal.type}"]`)?.classList.add('active');
 
         // Populate ingredients
         const ingContainer = document.getElementById('ingredients-inputs');
@@ -956,41 +924,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = sanitize(rawName);
         const desc = sanitize(document.getElementById('add-desc').value.trim());
         const ings = [...document.querySelectorAll('.ing-input')].map(i => sanitize(i.value.trim())).filter(Boolean);
+        const currentIsDiet = document.querySelector('.diet-option.active')?.dataset.value === 'yes';
+        const activeType = document.querySelector('.type-btn.active');
+
+        if (!activeType) return alert('Please select a meal type');
 
         const meals = getStore(STORE.customMeals);
+        const mealIndex = meals.findIndex(m => m.id === oldId);
 
-        if (isDietFriendly) {
-            // Update all 3 instances
-            const baseId = oldId.split('_')[0] + '_' + oldId.split('_')[1];
-            const content = sanitize(document.getElementById('add-content').value.trim());
-
-            meals.forEach(m => {
-                if (m.id.startsWith(baseId)) {
-                    m.title = `${name} 🥗`;
-                    m.desc = desc;
-                    m.ingredients = ings;
-                    m.recipeContent = content;
-                }
-            });
-
-            // Update recipe too
-            const recipes = getStore(STORE.customRecipes);
-            const recipeIndex = recipes.findIndex(r => r.id.startsWith(baseId));
-            if (recipeIndex !== -1) {
-                recipes[recipeIndex].title = name;
-                recipes[recipeIndex].desc = desc;
-                recipes[recipeIndex].content = content;
-                setStore(STORE.customRecipes, recipes);
-            }
-        } else {
-            const mealIndex = meals.findIndex(m => m.id === oldId);
-            if (mealIndex !== -1) {
-                const activeType = document.querySelector('.type-btn.active');
-                meals[mealIndex].title = name;
-                meals[mealIndex].desc = desc;
-                meals[mealIndex].type = activeType?.dataset.value || meals[mealIndex].type;
-                meals[mealIndex].ingredients = ings;
-            }
+        if (mealIndex !== -1) {
+            meals[mealIndex].title = currentIsDiet ? `${name} 🥗` : name;
+            meals[mealIndex].desc = desc;
+            meals[mealIndex].type = activeType.dataset.value;
+            meals[mealIndex].ingredients = ings;
+            meals[mealIndex].isDietFriendly = currentIsDiet;
         }
 
         setStore(STORE.customMeals, meals);
