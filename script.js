@@ -429,6 +429,34 @@ document.addEventListener('DOMContentLoaded', () => {
         return card;
     }
 
+    function renderOptions(mealType) {
+        const container = document.getElementById(`options-${mealType}`);
+        if (!container) return;
+
+        // Get default + custom imported options
+        const defaultOptions = MEAL_OPTIONS[mealType] || [];
+        const customOptions = (getStore('customMealOptions') || {})[mealType] || [];
+        const allOptions = [...defaultOptions, ...customOptions];
+
+        container.innerHTML = '';
+        allOptions.forEach(opt => {
+            const card = document.createElement('div');
+            card.className = 'meal-option-card';
+            card.innerHTML = `
+                <h4>${opt.title}</h4>
+                <p>${opt.desc || ''}</p>
+            `;
+            card.onclick = () => {
+                document.querySelectorAll(`#options-${mealType} .meal-option-card`).forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                customizeOptions[mealType] = opt;
+            };
+            // Pre-select if already selected
+            const existing = getStore(STORE[`used${mealType.charAt(0).toUpperCase() + mealType.slice(1)}`]);
+            if (existing.includes(opt.id)) card.classList.add('selected');
+            container.appendChild(card);
+        });
+    }
     function deleteCustomMeal(id) {
         let meals = getStore(STORE.customMeals);
         meals = meals.filter(m => m.id !== id);
@@ -931,11 +959,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // ---------- IMPORT/EXPORT DATA ----------
     function setupImportExport() {
         const exportBtn = document.getElementById('export-data-btn');
+        const downloadSampleBtn = document.getElementById('download-sample-btn');
         const importBtn = document.getElementById('import-data-btn');
         const fileInput = document.getElementById('import-file-input');
 
         if (exportBtn) {
             exportBtn.onclick = exportData;
+        }
+
+        if (downloadSampleBtn) {
+            downloadSampleBtn.onclick = downloadSamplePlan;
         }
 
         if (importBtn && fileInput) {
@@ -946,6 +979,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 fileInput.value = ''; // Reset for re-import
             };
         }
+    }
+
+    function downloadSamplePlan() {
+        // Create sample plan with default meals from data.js
+        const samplePlan = {
+            version: '1.3.0',
+            exportDate: new Date().toISOString(),
+            appName: 'Nourish Daily - Sample Meal Plan',
+            description: 'This is a sample meal plan. Import this to see example meals and recipes.',
+            data: {
+                customMeals: [],
+                customRecipes: [],
+                mealOptions: {
+                    breakfast: MEAL_OPTIONS.breakfast || [],
+                    lunch: MEAL_OPTIONS.lunch || [],
+                    dinner: MEAL_OPTIONS.dinner || []
+                },
+                used_breakfast: [],
+                used_lunch: [],
+                used_dinner: []
+            }
+        };
+
+        const json = JSON.stringify(samplePlan, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'nourish-daily-sample-plan.json';
+        a.click();
+        URL.revokeObjectURL(url);
+
+        const optionCount = (samplePlan.data.mealOptions.breakfast?.length || 0) +
+            (samplePlan.data.mealOptions.lunch?.length || 0) +
+            (samplePlan.data.mealOptions.dinner?.length || 0);
+
+        alert(`✅ Sample plan downloaded!\n\n${optionCount} meal options included\n\nImport this file to see example meals.`);
     }
 
     function exportData() {
@@ -1027,10 +1097,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 setStore(STORE.customMeals, mergedMeals);
                 setStore(STORE.customRecipes, mergedRecipes);
 
-                // Also import used meals if available
+                //Also import used meals if available
                 if (imported.data.used_breakfast) setStore(STORE.usedBreakfast, imported.data.used_breakfast);
                 if (imported.data.used_lunch) setStore(STORE.usedLunch, imported.data.used_lunch);
                 if (imported.data.used_dinner) setStore(STORE.usedDinner, imported.data.used_dinner);
+
+                // Import meal options (adds to customization modal)
+                if (imported.data.mealOptions) {
+                    const customOptions = getStore('customMealOptions') || { breakfast: [], lunch: [], dinner: [] };
+
+                    ['breakfast', 'lunch', 'dinner'].forEach(mealType => {
+                        const importedOptions = imported.data.mealOptions[mealType] || [];
+                        const existing = customOptions[mealType] || [];
+
+                        // Merge avoiding duplicates by ID
+                        importedOptions.forEach(option => {
+                            if (!existing.find(o => o.id === option.id)) {
+                                existing.push(option);
+                            }
+                        });
+
+                        customOptions[mealType] = existing;
+                    });
+
+                    setStore('customMealOptions', customOptions);
+                }
 
                 // Refresh all tabs
                 initToday();
@@ -1042,9 +1133,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 const added = (mergedMeals.length - currentMeals.length) +
                     (mergedRecipes.length - currentRecipes.length);
 
+                const optionsAdded = imported.data.mealOptions ?
+                    (imported.data.mealOptions.breakfast?.length || 0) +
+                    (imported.data.mealOptions.lunch?.length || 0) +
+                    (imported.data.mealOptions.dinner?.length || 0) : 0;
+
                 alert(
                     `✅ Data imported successfully!\n\n` +
                     `${added} new items added\n` +
+                    `${optionsAdded} meal options added to customize menu\n` +
                     `Total: ${mergedMeals.length} meals, ${mergedRecipes.length} recipes`
                 );
 
