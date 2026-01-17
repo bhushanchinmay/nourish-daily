@@ -876,3 +876,49 @@ label {
     gap: 16px;
     padding: 16px 0;
 }
+/* --- UPDATE TOAST --- */
+#update-toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateX(-50%) translateY(100px); opacity: 0; }
+    to { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+
+#update-toast .toast-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--tint-primary);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    font-weight: 500;
+}
+
+#update-toast button {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+#update-toast button:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+#update-toast .dismiss {
+    padding: 6px 8px;
+    font-size: 1em;
+}

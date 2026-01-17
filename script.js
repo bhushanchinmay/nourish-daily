@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupTabs();
     setupCustomizeModal();
     setupAddModal();
+    setupUpdateNotification();
 
     // ---------- THEME ----------
     function initTheme() {
@@ -1281,7 +1282,51 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.readAsText(file);
     }
 
+    // ---------- SERVICE WORKER UPDATE NOTIFICATION ----------
+    function setupUpdateNotification() {
+        if (!('serviceWorker' in navigator)) return;
+
+        // Listen for new service worker controlling the page
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            showUpdateToast();
+        });
+
+        // Also check for waiting service worker on load
+        navigator.serviceWorker.ready.then(registration => {
+            if (registration.waiting) {
+                showUpdateToast();
+            }
+
+            // Listen for new service worker installing
+            registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        showUpdateToast();
+                    }
+                });
+            });
+        });
+    }
+
+    function showUpdateToast() {
+        // Check if toast already exists
+        if (document.getElementById('update-toast')) return;
+
+        const toast = document.createElement('div');
+        toast.id = 'update-toast';
+        toast.innerHTML = `
+            <div class="toast-content">
+                <span>🎉 New version available!</span>
+                <button onclick="location.reload()">Update Now</button>
+                <button class="dismiss" onclick="this.parentElement.parentElement.remove()">✕</button>
+            </div>
+        `;
+        document.body.appendChild(toast);
+    }
+
     // Initialize import/export
     setupImportExport();
+
 
 });
