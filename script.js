@@ -699,16 +699,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         document.getElementById('submit-add').onclick = () => {
-            const name = document.getElementById('add-name').value.trim();
-            if (!name) return alert('Name is required');
-            const desc = document.getElementById('add-desc').value.trim();
+            const rawName = document.getElementById('add-name').value.trim();
+            if (!rawName) return alert('Name is required');
+            const name = sanitize(rawName);
+            const desc = sanitize(document.getElementById('add-desc').value.trim());
             const isDiet = document.querySelector('.diet-option.active')?.dataset.value === 'yes';
-            const ings = [...document.querySelectorAll('.ing-input')].map(i => i.value.trim()).filter(Boolean);
+            const ings = [...document.querySelectorAll('.ing-input')].map(i => sanitize(i.value.trim())).filter(Boolean);
 
             if (isDiet) {
                 // Diet-friendly meal/recipe
-                const content = document.getElementById('add-content').value.trim();
-                if (!content) return alert('Please add recipe steps/instructions for diet-friendly meals');
+                const rawContent = document.getElementById('add-content').value.trim();
+                if (!rawContent) return alert('Please add recipe steps/instructions for diet-friendly meals');
+                const content = sanitize(rawContent);
 
                 // Save as BOTH meal and recipe
                 const id = `df_${Date.now()}`;
@@ -936,18 +938,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateMeal(oldId, isDietFriendly) {
-        const name = document.getElementById('add-name').value.trim();
-        if (!name) return alert('Name is required');
-
-        const desc = document.getElementById('add-desc').value.trim();
-        const ings = [...document.querySelectorAll('.ing-input')].map(i => i.value.trim()).filter(Boolean);
+        const rawName = document.getElementById('add-name').value.trim();
+        if (!rawName) return alert('Name is required');
+        const name = sanitize(rawName);
+        const desc = sanitize(document.getElementById('add-desc').value.trim());
+        const ings = [...document.querySelectorAll('.ing-input')].map(i => sanitize(i.value.trim())).filter(Boolean);
 
         const meals = getStore(STORE.customMeals);
 
         if (isDietFriendly) {
             // Update all 3 instances
             const baseId = oldId.split('_')[0] + '_' + oldId.split('_')[1];
-            const content = document.getElementById('add-content').value.trim();
+            const content = sanitize(document.getElementById('add-content').value.trim());
 
             meals.forEach(m => {
                 if (m.id.startsWith(baseId)) {
@@ -992,11 +994,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateRecipe(oldId) {
-        const name = document.getElementById('add-name').value.trim();
-        if (!name) return alert('Name is required');
-
-        const desc = document.getElementById('add-desc').value.trim();
-        const content = document.getElementById('add-content').value.trim();
+        const rawName = document.getElementById('add-name').value.trim();
+        if (!rawName) return alert('Name is required');
+        const name = sanitize(rawName);
+        const desc = sanitize(document.getElementById('add-desc').value.trim());
+        const content = sanitize(document.getElementById('add-content').value.trim());
 
         const recipes = getStore(STORE.customRecipes);
         const index = recipes.findIndex(r => r.id === oldId);

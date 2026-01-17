@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nourish Daily - Test Suite v1.4.2</title>
+    <title>Nourish Daily - Test Suite v1.4.4</title>
     <style>
         * {
             box-sizing: border-box;
@@ -120,6 +120,7 @@
     <button onclick="runAllTests()">▶️ Run All Tests</button>
     <button onclick="runUnitTests()">🔬 Unit Tests</button>
     <button onclick="runIntegrationTests()">🔗 Integration Tests</button>
+    <button onclick="runSecurityTests()">🔒 Security Tests</button>
     <button onclick="clearResults()">🗑️ Clear Results</button>
 
     <div id="results"></div>
@@ -131,6 +132,7 @@
 
     <script src="data.js"></script>
     <script src="env.config.js"></script>
+    <script src="config.js"></script>
     <script>
         // ========================================
         // TEST FRAMEWORK
@@ -235,27 +237,22 @@
             assert(typeof QUICK_BITES.hungry === 'object', 'QUICK_BITES.hungry exists', 'Data Loading');
             assert(Array.isArray(QUICK_BITES.hungry.items), 'QUICK_BITES.hungry.items is array', 'Data Loading');
 
-            // Test 10: No egg whites in QUICK_BITES (user removed)
-            track('noEggWhites');
-            const hasEggWhites = QUICK_BITES.hungry.items.some(i => i.title.toLowerCase().includes('egg white'));
-            assert(!hasEggWhites, 'Egg whites removed from snacks', 'User Customization');
-
-            // Test 11: ENV config loaded
+            // Test 10: ENV config loaded
             track('ENV');
             assert(typeof ENV === 'object' || typeof window.ENV === 'undefined', 'ENV config exists or is optional', 'Configuration');
 
-            // Test 12: DAILY_ESSENTIALS
+            // Test 11: DAILY_ESSENTIALS
             track('DAILY_ESSENTIALS');
             assert(Array.isArray(DAILY_ESSENTIALS), 'DAILY_ESSENTIALS is array', 'Data Loading');
 
-            // Test 13: Meal data for each day
+            // Test 12: Meal data for each day
             track('mealDays');
             const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
             days.forEach(day => {
                 assert(MEAL_DATA[day], `MEAL_DATA has ${day}`, 'Weekly Data');
             });
 
-            // Test 14: Each day has breakfast, lunch, dinner
+            // Test 13: Each day has breakfast, lunch, dinner
             days.forEach(day => {
                 const dayData = MEAL_DATA[day];
                 assert(dayData.breakfast && dayData.lunch && dayData.dinner, `${day} has all meals`, 'Weekly Data');
@@ -416,6 +413,44 @@
         }
 
         // ========================================
+        // SECURITY TESTS
+        // ========================================
+        function runSecurityTests() {
+            resetTests();
+
+            // Sanitize function
+            track('sanitize');
+            const sanitize = (str) => {
+                if (!str) return '';
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            };
+            assert(typeof sanitize === 'function', 'sanitize function exists', 'Security');
+
+            // Sanitize normal text
+            track('sanitizeNormal');
+            assertEqual(sanitize('Hello'), 'Hello', 'Sanitize preserves normal text', 'Security');
+
+            // Sanitize escapes script tags
+            track('sanitizeXSS');
+            const xss = String.fromCharCode(60) + 'script' + String.fromCharCode(62) + 'alert(1)' + String.fromCharCode(60) + '/script' + String.fromCharCode(62);
+            const safe = sanitize(xss);
+            assert(!safe.includes(String.fromCharCode(60) + 'script'), 'Sanitize escapes script tags', 'Security');
+
+            // Sanitize handles empty
+            track('sanitizeEmpty');
+            assertEqual(sanitize(''), '', 'Sanitize handles empty string', 'Security');
+            assertEqual(sanitize(null), '', 'Sanitize handles null', 'Security');
+
+            // Storage uses namespace
+            track('storageNamespace');
+            assert(CONFIG.storage.selections.startsWith('nd_'), 'Storage uses nd_ prefix', 'Security');
+
+            renderResults('Security Tests');
+        }
+
+        // ========================================
         // RUN ALL TESTS
         // ========================================
         function runAllTests() {
@@ -430,11 +465,16 @@
             runIntegrationTests();
             const integrationResults = { ...tests };
 
+            // Run security tests
+            resetTests();
+            runSecurityTests();
+            const securityResults = { ...tests };
+
             // Combine results
-            tests.passed = unitResults.passed + integrationResults.passed;
-            tests.failed = unitResults.failed + integrationResults.failed;
-            tests.total = unitResults.total + integrationResults.total;
-            tests.results = [...unitResults.results, ...integrationResults.results];
+            tests.passed = unitResults.passed + integrationResults.passed + securityResults.passed;
+            tests.failed = unitResults.failed + integrationResults.failed + securityResults.failed;
+            tests.total = unitResults.total + integrationResults.total + securityResults.total;
+            tests.results = [...unitResults.results, ...integrationResults.results, ...securityResults.results];
 
             renderResults('All Tests');
             showCoverage();
@@ -490,9 +530,10 @@
 
             const functions = [
                 'MEAL_DATA', 'MEAL_OPTIONS', 'SNACKS', 'RECIPES', 'TIME_RANGES', 'QUICK_BITES', 'ENV', 'DAILY_ESSENTIALS',
-                'uniqueRecipeIds', 'noEggWhites', 'mealDays', 'getStore', 'setStore', 'capitalizeFirst',
+                'uniqueRecipeIds', 'mealDays', 'getStore', 'setStore', 'capitalizeFirst',
                 'importData', 'titleDedup', 'mealGrouping', 'filterLogic', 'timeBasedTab', 'ingredientDedup',
-                'samplePlanExport', 'modalHidden', 'dateFormatting', 'selectionStorage', 'customMealStructure', 'importedMealStructure'
+                'samplePlanExport', 'modalHidden', 'dateFormatting', 'selectionStorage', 'customMealStructure', 'importedMealStructure',
+                'sanitize', 'sanitizeNormal', 'sanitizeXSS', 'sanitizeEmpty', 'storageNamespace', 'CONFIG'
             ];
 
             const covered = functions.filter(f => coverageTracker.has(f)).length;

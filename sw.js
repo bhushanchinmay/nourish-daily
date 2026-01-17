@@ -1,8 +1,10 @@
-// Service Worker for Nourish Daily PWA
+// Service Worker for Nourish Daily Web App
 // Auto-updates with version-based cache busting
 
-// IMPORTANT: Increment this on every deploy to bust cache
-const CACHE_VERSION = 'v1.4.3';
+// CONFIG NOTE: These values are hardcoded because service workers
+// run in a separate context and cannot import from config.js.
+// Keep in sync with: package.json version, env.config.js basePath
+const CACHE_VERSION = 'v1.4.4';
 const CACHE_NAME = `nourish-daily-${CACHE_VERSION}`;
 const BASE_PATH = '/nourish-daily/';
 
