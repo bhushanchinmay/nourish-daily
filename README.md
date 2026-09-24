@@ -150,6 +150,7 @@ See [SECURITY.md](SECURITY.md) for details.
 - 🐛 "New version available" toast no longer shows on first visit
 - 🔒 Weekly tab escapes meal titles; CSP now allows the Google Font
 - 🐛 Export confirmation shows line breaks instead of literal "\n"
+- 📱 Added PWA app icons (all 8 sizes) so the app is installable
 
 ### v1.6.0 (2026-01-17) - Simplified Add Meal Form
 - 🍽️ Always show meal type selector (Breakfast/Lunch/Dinner)

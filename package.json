@@ -12,7 +12,8 @@
                 "Update toast no longer shown on first service worker install",
                 "Weekly tab escapes meal titles before rendering",
                 "CSP allows Google Fonts stylesheet and font files",
-                "Export alert shows real line breaks"
+                "Export alert shows real line breaks",
+                "Added missing PWA icons (72-512px) plus favicon and apple-touch-icon links"
             ],
             "date": "2026-09-24"
         },
