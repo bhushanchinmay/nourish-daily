@@ -1,8 +1,18 @@
 {
-    "version": "1.6.1",
+    "version": "1.6.2",
     "name": "Nourish Daily",
     "description": "Smart meal planning and nutrition tracking PWA with Ayurvedic principles",
     "changelog": {
+        "1.6.2": {
+            "type": "patch",
+            "fixes": [
+                "Customize no longer runs out of meals: used meals are derived from this week's selections (Sun-Sat) instead of a list that never reset",
+                "Today's pick is never blocked, so it can be changed; Reset frees it",
+                "Removed legacy nd_used_meals storage key",
+                "Greyed-out options show a 'Had this week' label"
+            ],
+            "date": "2026-09-24"
+        },
         "1.6.1": {
             "type": "patch",
             "fixes": [

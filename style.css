@@ -754,7 +754,13 @@ label {
 .option-card.used {
     opacity: 0.6;
     background: var(--bg-secondary);
-    /* or custom style for used */
+    cursor: not-allowed;
+}
+
+.option-used {
+    font-size: 0.75em;
+    margin-top: 4px;
+    color: var(--text-secondary);
 }
 
 .option-title {

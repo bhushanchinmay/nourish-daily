@@ -4,7 +4,7 @@
 
 A Progressive Web App for managing daily meals, recipes, and meal planning with time-based recommendations, customization, and offline support.
 
-![Version](https://img.shields.io/badge/version-1.6.1-green)
+![Version](https://img.shields.io/badge/version-1.6.2-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![PWA](https://img.shields.io/badge/installable-yes-purple)
 ![Tests](https://img.shields.io/badge/tests-90%25_coverage-brightgreen)
@@ -142,6 +142,11 @@ See [SECURITY.md](SECURITY.md) for details.
 ---
 
 ## 📜 Changelog
+
+### v1.6.2 (2026-09-24) - Weekly Meal Rotation
+- 🔄 Customize no longer runs out of meals: only meals picked on other days this week are greyed out
+- 📅 Rotation resets every Sunday; today's pick can always be changed or reset
+- 🏷️ Greyed-out meals show "Had this week"
 
 ### v1.6.1 (2026-09-24) - Bug Fixes
 - 🐛 Fixed "+" (Add Meal) button crashing and never opening the form
