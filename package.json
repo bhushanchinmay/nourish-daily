@@ -1,8 +1,18 @@
 {
-    "version": "1.6.2",
+    "version": "1.6.3",
     "name": "Nourish Daily",
     "description": "Smart meal planning and nutrition tracking PWA with Ayurvedic principles",
     "changelog": {
+        "1.6.3": {
+            "type": "patch",
+            "fixes": [
+                "Weekly tab validates today's selections, so deleted custom meals fall back to the default plan",
+                "isValidSelection shared between Today and Weekly",
+                "Deleting from Customize refreshes Today, Weekly, Recipes and Manage",
+                "Deleting from Manage refreshes Weekly and Recipes for all meal types"
+            ],
+            "date": "2026-09-24"
+        },
         "1.6.2": {
             "type": "patch",
             "fixes": [
