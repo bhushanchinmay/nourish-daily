@@ -30,6 +30,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return div.innerHTML;
     }
 
+    // Reverse sanitize() so stored values can be put back into form inputs
+    function unsanitize(str) {
+        if (!str) return '';
+        const ta = document.createElement('textarea');
+        ta.innerHTML = str;
+        return ta.value;
+    }
+
     // ---------- INIT ----------
     initTheme();
     initToday();
@@ -186,9 +194,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${i === dayIndex ? '<span class="day-badge">Today</span>' : ''}
                 </div>
                 <div class="day-rows">
-                    <div class="day-row"><span>🌅 Breakfast</span><span>${breakfast.title}</span></div>
-                    <div class="day-row"><span>🍱 Lunch</span><span>${lunch.title}</span></div>
-                    <div class="day-row"><span>🌙 Dinner</span><span>${dinner.title}</span></div>
+                    <div class="day-row"><span>🌅 Breakfast</span><span>${sanitize(breakfast.title)}</span></div>
+                    <div class="day-row"><span>🍱 Lunch</span><span>${sanitize(lunch.title)}</span></div>
+                    <div class="day-row"><span>🌙 Dinner</span><span>${sanitize(dinner.title)}</span></div>
                 </div>
             `;
             container.appendChild(card);
@@ -617,7 +625,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const modal = document.getElementById('add-modal');
         const fab = document.getElementById('fab');
         const mealTypeGroup = document.getElementById('meal-type-group');
-        const recipeContentGroup = document.getElementById('recipe-content-group');
         const ingredientsGroup = document.getElementById('ingredients-group');
 
         // Only FAB opens modal now
@@ -640,8 +647,12 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.diet-option').forEach(b => b.classList.remove('active'));
             document.querySelector('.diet-option[data-value="no"]').classList.add('active');
             mealTypeGroup.style.display = 'block';
-            recipeContentGroup.style.display = 'none';
             ingredientsGroup.style.display = 'block';
+
+            // Restore Save handler in case an Edit was cancelled
+            const submitBtn = document.getElementById('submit-add');
+            submitBtn.textContent = 'Save';
+            submitBtn.onclick = saveNewMeal;
 
             // Properly reset ingredients section
             ingContainer.innerHTML = '';
@@ -708,7 +719,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        document.getElementById('submit-add').onclick = () => {
+        document.getElementById('submit-add').onclick = saveNewMeal;
+
+        function saveNewMeal() {
             const rawName = document.getElementById('add-name').value.trim();
             if (!rawName) return alert('Name is required');
             const name = sanitize(rawName);
@@ -742,9 +755,9 @@ document.addEventListener('DOMContentLoaded', () => {
             initManage();
 
             const mealKind = isDiet ? 'diet-friendly meal' : 'meal';
-            alert(`✅ "${name}" added as ${mType} ${mealKind}!`);
+            alert(`✅ "${rawName}" added as ${mType} ${mealKind}!`);
             modal.classList.add('hidden');
-        };
+        }
     }
 
     // ---------- HELPERS ----------
@@ -841,8 +854,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Populate add modal with existing data
         const modal = document.getElementById('add-modal');
         document.getElementById('add-modal-title').textContent = 'Edit Meal';
-        document.getElementById('add-name').value = meal.title.replace(' 🥗', '');
-        document.getElementById('add-desc').value = meal.desc || '';
+        document.getElementById('add-name').value = unsanitize(meal.title.replace(' 🥗', ''));
+        document.getElementById('add-desc').value = unsanitize(meal.desc);
 
         // Set diet-friendly toggle
         document.querySelectorAll('.diet-option').forEach(b => b.classList.remove('active'));
@@ -874,7 +887,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const input = document.createElement('input');
                 input.type = 'text';
                 input.className = 'ing-input';
-                input.value = ing;
+                input.value = unsanitize(ing);
                 input.style.marginBottom = '0';
 
                 const removeBtn = document.createElement('button');
@@ -1122,7 +1135,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const mealCount = allMeals.breakfast.length + allMeals.lunch.length + allMeals.dinner.length;
         const recipeCount = data.data.customRecipes.length;
-        alert(`✅ Backup exported!\\n\\n${mealCount} meals + ${recipeCount} recipes\\n\\nEdit the JSON and reimport anytime.`);
+        alert(`✅ Backup exported!\n\n${mealCount} meals + ${recipeCount} recipes\n\nEdit the JSON and reimport anytime.`);
     }
 
     function importData(file) {
@@ -1260,9 +1273,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function setupUpdateNotification() {
         if (!('serviceWorker' in navigator)) return;
 
-        // Listen for new service worker controlling the page
+        // Listen for new service worker controlling the page.
+        // Skip first install: clients.claim() fires controllerchange with no previous controller.
+        const hadController = !!navigator.serviceWorker.controller;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
-            showUpdateToast();
+            if (hadController) showUpdateToast();
         });
 
         // Also check for waiting service worker on load

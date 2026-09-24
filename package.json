@@ -1,8 +1,22 @@
 {
-    "version": "1.6.0",
+    "version": "1.6.1",
     "name": "Nourish Daily",
     "description": "Smart meal planning and nutrition tracking PWA with Ayurvedic principles",
     "changelog": {
+        "1.6.1": {
+            "type": "patch",
+            "fixes": [
+                "Fixed Add Meal (+) button crash from removed recipe-content-group element",
+                "Cancelled Edit no longer hijacks the next Add Meal save",
+                "Edit form decodes stored values so names are not re-escaped on every edit",
+                "Update toast no longer shown on first service worker install",
+                "Weekly tab escapes meal titles before rendering",
+                "CSP allows Google Fonts stylesheet and font files",
+                "Export alert shows real line breaks",
+                "Added missing PWA icons (72-512px) plus favicon and apple-touch-icon links"
+            ],
+            "date": "2026-09-24"
+        },
         "1.6.0": {
             "type": "minor",
             "features": [

@@ -4,7 +4,7 @@
 
 A Progressive Web App for managing daily meals, recipes, and meal planning with time-based recommendations, customization, and offline support.
 
-![Version](https://img.shields.io/badge/version-1.6.0-green)
+![Version](https://img.shields.io/badge/version-1.6.1-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![PWA](https://img.shields.io/badge/installable-yes-purple)
 ![Tests](https://img.shields.io/badge/tests-90%25_coverage-brightgreen)
@@ -142,6 +142,15 @@ See [SECURITY.md](SECURITY.md) for details.
 ---
 
 ## 📜 Changelog
+
+### v1.6.1 (2026-09-24) - Bug Fixes
+- 🐛 Fixed "+" (Add Meal) button crashing and never opening the form
+- 🐛 Cancelling an Edit no longer makes the next "Add" overwrite that meal
+- 🐛 Editing a meal no longer re-escapes names with &, <, > or quotes
+- 🐛 "New version available" toast no longer shows on first visit
+- 🔒 Weekly tab escapes meal titles; CSP now allows the Google Font
+- 🐛 Export confirmation shows line breaks instead of literal "\n"
+- 📱 Added PWA app icons (all 8 sizes) so the app is installable
 
 ### v1.6.0 (2026-01-17) - Simplified Add Meal Form
 - 🍽️ Always show meal type selector (Breakfast/Lunch/Dinner)

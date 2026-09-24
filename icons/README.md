@@ -1,36 +1,19 @@
 # App Icons
 
-This directory should contain PWA icons for installation.
+PWA icons referenced by `manifest.json` (and `index.html` for the favicon / iOS home screen).
 
-## Required Sizes
+| File | Size |
+|------|------|
+| `icon-72x72.png` – `icon-512x512.png` | 72, 96, 128, 144, 152, 192, 384, 512 px |
 
-Place the following PNG files here:
-- `icon-72x72.png`
-- `icon-96x96.png`
-- `icon-128x128.png`
-- `icon-144x144.png`
-- `icon-152x152.png`
-- `icon-192x192.png`
-- `icon-384x384.png`
-- `icon-512x512.png`
+## Design
 
-## How to Generate
+- White leaf on the app's green (`#34C759`) gradient, matching the 🌿 branding
+- Full-bleed background with the leaf inside the central 80% safe zone, so the
+  icons work with `"purpose": "any maskable"` (Android circle/squircle masks)
 
-1. **Option 1: PWA Asset Generator**
-   - Visit: https://www.pwabuilder.com/imageGenerator
-   - Upload a 512x512px square logo
-   - Download all sizes
+## Regenerating
 
-2. **Option 2: Online Tools**
-   - Use Canva or Figma to create a logo
-   - Export as 512x512px PNG
-   - Use an icon generator service
-
-3. **Option 3: Simple Emoji**
-   - Create a simple design using an emoji/text
-   - Use any image editor
-   - Export in all required sizes
-
-## Temporary Placeholder
-
-Until you add icons, the PWA will still work but won't have a custom app icon when installed.
+The icons are rendered from a single SVG. To change them, render your SVG at each
+size above (e.g. with Inkscape, `rsvg-convert`, or a headless browser screenshot)
+and replace the PNGs, keeping the file names unchanged.
