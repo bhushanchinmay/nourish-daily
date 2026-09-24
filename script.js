@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ---------- INIT ----------
+    localStorage.removeItem(STORE.used); // Legacy list that never reset (pre-v1.6.2)
     initTheme();
     initToday();
     initWeekly();
@@ -514,9 +515,26 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // Meals picked on the other days of this week (Sun-Sat, as in the Weekly tab).
+    // Derived from saved selections so it resets each week and today's pick stays changeable.
+    function getUsedThisWeek() {
+        const selections = getStore(STORE.selections);
+        const used = [];
+        for (let i = 0; i < 7; i++) {
+            if (i === dayIndex) continue;
+            const d = new Date(today);
+            d.setDate(today.getDate() - dayIndex + i);
+            const day = selections[d.toDateString()] || {};
+            ['breakfast', 'lunch', 'dinner'].forEach(type => {
+                if (day[type]?.id) used.push(day[type].id);
+            });
+        }
+        return used;
+    }
+
     function populateOptions() {
         const customMeals = getStore(STORE.customMeals);
-        const used = getStore(STORE.used);
+        const used = getUsedThisWeek();
         const selections = getStore(STORE.selections)[today.toDateString()] || {};
 
         ['breakfast', 'lunch', 'dinner'].forEach(type => {
@@ -545,6 +563,7 @@ document.addEventListener('DOMContentLoaded', () => {
         card.innerHTML = `
             <div class="option-title">${meal.title}</div>
             <div class="option-desc">${meal.desc || ''}</div>
+            ${card.classList.contains('used') ? '<div class="option-used">Had this week</div>' : ''}
             ${deleteHtml}
         `;
 
@@ -602,7 +621,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function saveSelections() {
         const selections = getStore(STORE.selections);
-        const used = getStore(STORE.used);
         const dayKey = today.toDateString();
         selections[dayKey] = {};
 
@@ -613,11 +631,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const desc = selected.querySelector('.option-desc').textContent;
                 const id = selected.dataset.id;
                 selections[dayKey][type] = { id, title, desc };
-                if (!used.includes(id)) used.push(id);
             }
         });
         setStore(STORE.selections, selections);
-        setStore(STORE.used, used);
     }
 
     // ---------- ADD MODAL ----------
