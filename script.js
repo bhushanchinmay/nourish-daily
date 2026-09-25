@@ -96,18 +96,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const todayKey = today.toDateString();
         const custom = selections[todayKey] || {};
         const defaults = MEAL_DATA[dayKey];
-        const customMeals = getStore(STORE.customMeals);
-
-        // Helper to validate if a selection still exists
-        function isValidSelection(meal) {
-            if (!meal || !meal.id) return false;
-            // Default meals (from MEAL_DATA) are always valid
-            if (!meal.id.startsWith('cm_') && !meal.id.startsWith('df_') && !meal.id.startsWith('imported_')) {
-                return true;
-            }
-            // Custom meals need to exist in customMeals store
-            return customMeals.some(m => m.id === meal.id);
-        }
 
         // Use selection if valid, otherwise fall back to default
         const bf = isValidSelection(custom.breakfast) ? custom.breakfast : defaults?.breakfast;
@@ -117,6 +105,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (bf) updateMealCard('breakfast', bf);
         if (ln) updateMealCard('lunch', ln);
         if (dn) updateMealCard('dinner', dn);
+    }
+
+    // A saved selection is valid if it's a default meal or a custom meal that still exists
+    function isValidSelection(meal) {
+        if (!meal || !meal.id) return false;
+        // Default meals (from MEAL_DATA) are always valid
+        if (!meal.id.startsWith('cm_') && !meal.id.startsWith('df_') && !meal.id.startsWith('imported_')) {
+            return true;
+        }
+        // Custom meals need to exist in customMeals store
+        return getStore(STORE.customMeals).some(m => m.id === meal.id);
     }
 
     function updateMealCard(type, data) {
@@ -181,9 +180,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const todayKey = today.toDateString();
                 const custom = selections[todayKey];
                 if (custom) {
-                    breakfast = custom.breakfast || breakfast;
-                    lunch = custom.lunch || lunch;
-                    dinner = custom.dinner || dinner;
+                    if (isValidSelection(custom.breakfast)) breakfast = custom.breakfast;
+                    if (isValidSelection(custom.lunch)) lunch = custom.lunch;
+                    if (isValidSelection(custom.dinner)) dinner = custom.dinner;
                 }
             }
 
@@ -617,6 +616,10 @@ document.addEventListener('DOMContentLoaded', () => {
         meals = meals.filter(m => m.id !== id);
         setStore(STORE.customMeals, meals);
         initPrepare(); // Update grocery list
+        loadMeals();
+        initWeekly();
+        initRecipes();
+        initManage();
     }
 
     function saveSelections() {
@@ -1025,15 +1028,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const recipes = getStore(STORE.customRecipes);
             const filteredRecipes = recipes.filter(r => !r.id.startsWith(baseId));
             setStore(STORE.customRecipes, filteredRecipes);
-            initRecipes(); // Refresh recipes tab
         } else {
             const filtered = meals.filter(m => m.id !== id);
             setStore(STORE.customMeals, filtered);
         }
 
+        initRecipes(); // Refresh recipes tab
         initManage(); // Refresh manage tab
         initPrepare(); // CRITICAL: Refresh Prep tab to remove deleted meal's ingredients
         initToday(); // Refresh Today tab to remove deleted meal
+        initWeekly();
         alert('✅ Meal deleted successfully!');
     }
 
@@ -1056,6 +1060,7 @@ document.addEventListener('DOMContentLoaded', () => {
         initManage();
         initRecipes();
         initToday(); //  Refresh Today tab
+        initWeekly();
         alert('✅ Recipe deleted successfully!');
     }
 
