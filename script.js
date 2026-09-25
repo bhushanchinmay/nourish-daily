@@ -22,6 +22,12 @@ document.addEventListener('DOMContentLoaded', () => {
         theme: 'nd_theme'
     };
 
+    // Import validation (see IMPORT CLEANING)
+    const MEAL_TYPES = ['breakfast', 'lunch', 'dinner'];
+    const SAFE_ID = /^[\w-]{1,64}$/;
+    const CUSTOM_ID = /^(cm|df|imported)_[\w-]{1,60}$/;
+    const DEFAULT_IDS = new Set(MEAL_TYPES.flatMap(t => (MEAL_OPTIONS[t] || []).map(m => m.id)));
+
     // Security: Sanitize user input to prevent XSS
     function sanitize(str) {
         if (!str) return '';
@@ -40,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ---------- INIT ----------
     localStorage.removeItem(STORE.used); // Legacy list that never reset (pre-v1.6.2)
+    repairStoredData();
     initTheme();
     initToday();
     initWeekly();
@@ -1159,6 +1166,87 @@ document.addEventListener('DOMContentLoaded', () => {
         alert(`✅ Backup exported!\n\n${mealCount} meals + ${recipeCount} recipes\n\nEdit the JSON and reimport anytime.`);
     }
 
+    // ---------- IMPORT CLEANING ----------
+    // Backup files are untrusted: keep only known fields with the right types and
+    // store text escaped like the Add form does. unsanitize() first so text that is
+    // already escaped (our own exports) isn't escaped twice.
+
+    function cleanText(value) {
+        return typeof value === 'string' ? sanitize(unsanitize(value).trim()) : '';
+    }
+
+    function newImportId(kind) {
+        return `imported_${kind}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    }
+
+    function cleanMeal(raw, fallbackType) {
+        if (!raw || typeof raw !== 'object') return null;
+        const title = cleanText(raw.title);
+        const type = MEAL_TYPES.includes(raw.type) ? raw.type : fallbackType;
+        if (!title || !type) return null;
+        return {
+            // Ids without a custom prefix are treated as default meals, so replace them
+            id: typeof raw.id === 'string' && CUSTOM_ID.test(raw.id) ? raw.id : newImportId(type),
+            title,
+            desc: cleanText(raw.desc),
+            type,
+            ingredients: Array.isArray(raw.ingredients) ? raw.ingredients.map(cleanText).filter(Boolean) : [],
+            isDietFriendly: raw.isDietFriendly === true
+        };
+    }
+
+    function cleanRecipe(raw) {
+        if (!raw || typeof raw !== 'object') return null;
+        const title = cleanText(raw.title);
+        if (!title) return null;
+        return {
+            id: typeof raw.id === 'string' && SAFE_ID.test(raw.id) ? raw.id : newImportId('recipe'),
+            title,
+            desc: cleanText(raw.desc),
+            content: cleanText(raw.content)
+        };
+    }
+
+    // Selections hold plain text (rendered with textContent / sanitize), keyed by date
+    function cleanSelections(raw) {
+        const out = {};
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+        Object.keys(raw).forEach(date => {
+            const day = raw[date];
+            if (isNaN(Date.parse(date)) || !day || typeof day !== 'object') return;
+            const clean = {};
+            MEAL_TYPES.forEach(type => {
+                const m = day[type];
+                if (m && typeof m.id === 'string' && (DEFAULT_IDS.has(m.id) || CUSTOM_ID.test(m.id)) &&
+                    typeof m.title === 'string' && m.title.trim()) {
+                    clean[type] = { id: m.id, title: m.title.trim(), desc: typeof m.desc === 'string' ? m.desc : '' };
+                }
+            });
+            if (Object.keys(clean).length) out[date] = clean;
+        });
+        return out;
+    }
+
+    function cleanIdList(value) {
+        return Array.isArray(value) ? value.filter(id => typeof id === 'string' && SAFE_ID.test(id)) : null;
+    }
+
+    function cleanList(list, cleaner) {
+        const raw = Array.isArray(list) ? list : [];
+        const clean = raw.map(item => cleaner(item)).filter(Boolean);
+        return { clean, skipped: raw.length - clean.length };
+    }
+
+    // Repair data saved by earlier versions, which stored imports without cleaning
+    // (e.g. a non-string ingredient crashed the Prepare tab on every load)
+    function repairStoredData() {
+        [[STORE.customMeals, m => cleanMeal(m)], [STORE.customRecipes, cleanRecipe]].forEach(([key, cleaner]) => {
+            const stored = getStore(key);
+            const cleaned = cleanList(stored, cleaner).clean;
+            if (JSON.stringify(cleaned) !== JSON.stringify(stored)) setStore(key, cleaned);
+        });
+    }
+
     function importData(file) {
         const reader = new FileReader();
 
@@ -1167,16 +1255,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 const imported = JSON.parse(e.target.result);
 
                 // Validate structure
-                if (!imported.data || !imported.version) {
+                if (!imported || typeof imported !== 'object' || !imported.version ||
+                    !imported.data || typeof imported.data !== 'object') {
                     throw new Error('Invalid backup file format');
                 }
+                const data = imported.data;
+
+                // Clean everything before saving anything
+                const meals = cleanList(data.customMeals, m => cleanMeal(m));
+                const recipes = cleanList(data.customRecipes, cleanRecipe);
+                const options = {};
+                let skipped = meals.skipped + recipes.skipped;
+                MEAL_TYPES.forEach(type => {
+                    const result = cleanList(data.mealOptions?.[type], m => cleanMeal({ ...m, type }, type));
+                    options[type] = result.clean;
+                    skipped += result.skipped;
+                });
+                const selections = cleanSelections(data.selections);
 
                 // Confirm with user
-                const itemCount = (imported.data.customMeals?.length || 0) +
-                    (imported.data.customRecipes?.length || 0);
-
+                const itemCount = meals.clean.length + recipes.clean.length;
                 const action = confirm(
                     `Import ${itemCount} items from backup?\n\n` +
+                    (skipped ? `⚠️ ${skipped} invalid items will be skipped\n\n` : '') +
                     `✅ MERGE: Keep existing data and add imported items\n` +
                     `❌ CANCEL: Keep current data unchanged\n\n` +
                     `Click OK to MERGE, Cancel to abort.`
@@ -1193,71 +1294,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Merge avoiding duplicates by ID
                 const mergedMeals = [...currentMeals];
-                (imported.data.customMeals || []).forEach(meal => {
+                meals.clean.forEach(meal => {
                     if (!mergedMeals.find(m => m.id === meal.id)) {
                         mergedMeals.push(meal);
                     }
                 });
 
                 const mergedRecipes = [...currentRecipes];
-                (imported.data.customRecipes || []).forEach(recipe => {
+                recipes.clean.forEach(recipe => {
                     if (!mergedRecipes.find(r => r.id === recipe.id)) {
                         mergedRecipes.push(recipe);
                     }
+                });
+
+                // Import mealOptions as custom meals (adds to Recipes tab)
+                // Deduplicate by title, comparing decoded text so "&" and "&amp;" match
+                const titleKey = t => unsanitize(t).toLowerCase().trim();
+                const existingTitles = new Set(mergedMeals.map(m => titleKey(m.title)));
+                MEAL_TYPES.forEach(type => {
+                    (MEAL_OPTIONS[type] || []).forEach(m => existingTitles.add(titleKey(m.title)));
+                });
+
+                let importedMealsCount = 0;
+                MEAL_TYPES.forEach(type => {
+                    options[type].forEach(option => {
+                        const key = titleKey(option.title);
+                        if (!existingTitles.has(key)) {
+                            mergedMeals.push({ ...option, id: newImportId(type) });
+                            existingTitles.add(key);
+                            importedMealsCount++;
+                        }
+                    });
                 });
 
                 // Save merged data
                 setStore(STORE.customMeals, mergedMeals);
                 setStore(STORE.customRecipes, mergedRecipes);
 
-                //Also import used meals if available
-                if (imported.data.used_breakfast) setStore(STORE.usedBreakfast, imported.data.used_breakfast);
-                if (imported.data.used_lunch) setStore(STORE.usedLunch, imported.data.used_lunch);
-                if (imported.data.used_dinner) setStore(STORE.usedDinner, imported.data.used_dinner);
+                // Also import used meals if available
+                const usedBreakfast = cleanIdList(data.used_breakfast);
+                const usedLunch = cleanIdList(data.used_lunch);
+                const usedDinner = cleanIdList(data.used_dinner);
+                if (usedBreakfast) setStore(STORE.usedBreakfast, usedBreakfast);
+                if (usedLunch) setStore(STORE.usedLunch, usedLunch);
+                if (usedDinner) setStore(STORE.usedDinner, usedDinner);
 
                 // Import selections (user's meal choices per day)
-                if (imported.data.selections) {
-                    const currentSelections = getStore(STORE.selections);
-                    const mergedSelections = { ...currentSelections, ...imported.data.selections };
-                    setStore(STORE.selections, mergedSelections);
-                }
-
-                // Import mealOptions as custom meals (adds to Recipes tab)
-                let importedMealsCount = 0;
-                if (imported.data.mealOptions) {
-                    const existingMeals = getStore(STORE.customMeals);
-                    const existingTitles = new Set(existingMeals.map(m => m.title.toLowerCase().trim()));
-
-                    // Also check default MEAL_OPTIONS titles
-                    ['breakfast', 'lunch', 'dinner'].forEach(type => {
-                        (MEAL_OPTIONS[type] || []).forEach(m => {
-                            existingTitles.add(m.title.toLowerCase().trim());
-                        });
-                    });
-
-                    ['breakfast', 'lunch', 'dinner'].forEach(mealType => {
-                        const importedOptions = imported.data.mealOptions[mealType] || [];
-
-                        importedOptions.forEach(option => {
-                            const titleLower = option.title.toLowerCase().trim();
-
-                            // Skip if title already exists (deduplication by title)
-                            if (!existingTitles.has(titleLower)) {
-                                existingMeals.push({
-                                    id: `imported_${mealType}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-                                    title: option.title,
-                                    desc: option.desc || '',
-                                    type: mealType,
-                                    ingredients: option.ingredients || [],
-                                    isImported: true
-                                });
-                                existingTitles.add(titleLower);
-                                importedMealsCount++;
-                            }
-                        });
-                    });
-
-                    setStore(STORE.customMeals, existingMeals);
+                if (Object.keys(selections).length) {
+                    setStore(STORE.selections, { ...getStore(STORE.selections), ...selections });
                 }
 
                 // Refresh all tabs
@@ -1267,14 +1351,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 initRecipes();
                 initManage();
 
-                const added = (mergedMeals.length - currentMeals.length) +
+                const added = (mergedMeals.length - importedMealsCount - currentMeals.length) +
                     (mergedRecipes.length - currentRecipes.length);
 
                 alert(
                     `✅ Data imported successfully!\n\n` +
                     `${importedMealsCount} new meals added to Recipes\n` +
                     `${added} custom items merged\n` +
-                    `Total: ${mergedMeals.length + importedMealsCount} meals`
+                    (skipped ? `${skipped} invalid items skipped\n` : '') +
+                    `Total: ${mergedMeals.length} meals`
                 );
 
             } catch (error) {
