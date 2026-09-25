@@ -1,8 +1,19 @@
 {
-    "version": "1.6.3",
+    "version": "1.6.4",
     "name": "Nourish Daily",
     "description": "Smart meal planning and nutrition tracking PWA with Ayurvedic principles",
     "changelog": {
+        "1.6.4": {
+            "type": "patch",
+            "fixes": [
+                "Import validates and cleans every entry before saving: known fields only, escaped text, safe ids, valid meal types, string ingredients",
+                "Invalid entries are skipped and counted instead of failing the whole import after partially saving",
+                "Custom meal ids that could impersonate default meals are replaced",
+                "Stored meals and recipes from earlier unsafe imports are repaired on load",
+                "Title deduplication compares decoded text so escaped and raw titles match"
+            ],
+            "date": "2026-09-25"
+        },
         "1.6.3": {
             "type": "patch",
             "fixes": [

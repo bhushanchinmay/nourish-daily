@@ -75,7 +75,7 @@ GitHub Pages enforces HTTPS, preventing:
 
 2. **Add CSP Header** - Already recommended above
 
-3. **Validate Import Data** - Check structure before processing
+3. **Validate Import Data** - ✅ Done (v1.6.4): backup files are validated and cleaned before anything is saved
 
 ### Not Applicable ❌
 1. Authentication (no backend)

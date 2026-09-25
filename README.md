@@ -4,7 +4,7 @@
 
 A Progressive Web App for managing daily meals, recipes, and meal planning with time-based recommendations, customization, and offline support.
 
-![Version](https://img.shields.io/badge/version-1.6.3-green)
+![Version](https://img.shields.io/badge/version-1.6.4-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![PWA](https://img.shields.io/badge/installable-yes-purple)
 ![Tests](https://img.shields.io/badge/tests-90%25_coverage-brightgreen)
@@ -120,6 +120,7 @@ deployment: {
 |---------|--------|-------------|
 | CSP Headers | ✅ Enabled | Content Security Policy meta tag |
 | Input Sanitization | ✅ Enabled | All user inputs sanitized before storage |
+| Import Validation | ✅ Enabled | Backup files validated and cleaned before saving |
 | No External CDNs | ✅ | All code self-contained |
 | HTTPS Only | ✅ | GitHub Pages enforces HTTPS |
 
@@ -142,6 +143,11 @@ See [SECURITY.md](SECURITY.md) for details.
 ---
 
 ## 📜 Changelog
+
+### v1.6.4 (2026-09-25) - Safe Imports
+- 🔒 Imported backups are cleaned: names, descriptions and ingredients can no longer run code
+- 🛡️ Invalid entries are skipped (and counted) instead of failing or half-saving the import
+- 🩹 Data saved by earlier imports is repaired on load, fixing a crash that could break the app
 
 ### v1.6.3 (2026-09-24) - Deleted Meals Cleanup
 - 🐛 Deleted custom meals no longer linger in the Weekly tab
