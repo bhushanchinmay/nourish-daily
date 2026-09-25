@@ -4,7 +4,7 @@
 
 A Progressive Web App for managing daily meals, recipes, and meal planning with time-based recommendations, customization, and offline support.
 
-![Version](https://img.shields.io/badge/version-1.6.4-green)
+![Version](https://img.shields.io/badge/version-1.6.5-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![PWA](https://img.shields.io/badge/installable-yes-purple)
 ![Tests](https://img.shields.io/badge/tests-90%25_coverage-brightgreen)
@@ -143,6 +143,12 @@ See [SECURITY.md](SECURITY.md) for details.
 ---
 
 ## 📜 Changelog
+
+### v1.6.5 (2026-09-25) - Diet-Friendly Delete Fix
+- 🐛 Deleting a diet-friendly meal no longer deletes other meals (e.g. every imported meal of that type)
+- 🐛 Diet-friendly imported meals no longer disappear from Manage and Recipes
+- 🐛 Imported recipes can be deleted from Manage
+- 🐛 Prepare lists every diet-friendly meal that needs an ingredient
 
 ### v1.6.4 (2026-09-25) - Safe Imports
 - 🔒 Imported backups are cleaned: names, descriptions and ingredients can no longer run code
