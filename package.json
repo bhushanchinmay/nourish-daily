@@ -1,8 +1,19 @@
 {
-    "version": "1.6.4",
+    "version": "1.6.5",
     "name": "Nourish Daily",
     "description": "Smart meal planning and nutrition tracking PWA with Ayurvedic principles",
     "changelog": {
+        "1.6.5": {
+            "type": "patch",
+            "fixes": [
+                "Diet-friendly grouping only applies to pre-1.6.0 copies (df_<time>_<type>) via mealGroupId, with exact id matching instead of prefix matching",
+                "Deleting one diet-friendly meal no longer deletes other meals sharing an id prefix (imported_<type>_..., cm_1 vs cm_10)",
+                "Diet-friendly meals with similar ids are no longer hidden in Manage and Recipes",
+                "Custom recipes with ids without an underscore can be deleted from Manage",
+                "Prepare tab lists all diet-friendly meals needing an ingredient"
+            ],
+            "date": "2026-09-25"
+        },
         "1.6.4": {
             "type": "patch",
             "fixes": [

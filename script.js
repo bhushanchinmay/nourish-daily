@@ -125,6 +125,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return getStore(STORE.customMeals).some(m => m.id === meal.id);
     }
 
+    // Diet-friendly meals saved before v1.6.0 were stored once per meal type
+    // (df_<time>_breakfast/_lunch/_dinner) plus a recipe with id df_<time>.
+    // Those copies form one group; every other id is its own group.
+    function mealGroupId(id) {
+        const legacy = /^(df_\d+)_(breakfast|lunch|dinner)$/.exec(id);
+        return legacy ? legacy[1] : id;
+    }
+
     function updateMealCard(type, data) {
         document.getElementById(`meal-${type}-title`).textContent = data.title;
         document.getElementById(`meal-${type}-desc`).textContent = data.desc;
@@ -240,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const group = document.getElementById('custom-ingredients-group');
         container.innerHTML = '';
 
-        // Use Set to deduplicate ingredients (diet-friendly meals appear 3x)
+        // Deduplicate ingredients; the title Set also collapses legacy diet-friendly copies
         const uniqueIngs = new Map(); // Map<ingredient, Set<mealTitles>>
 
         meals.forEach(m => {
@@ -250,10 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!uniqueIngs.has(key)) {
                         uniqueIngs.set(key, new Set());
                     }
-                    // Only add meal title if not diet-friendly duplicate
-                    if (!m.isDietFriendly || !uniqueIngs.get(key).size) {
-                        uniqueIngs.get(key).add(m.title.replace(' 🥗', ''));
-                    }
+                    uniqueIngs.get(key).add(m.title.replace(' 🥗', ''));
                 }
             });
         });
@@ -316,17 +321,13 @@ document.addEventListener('DOMContentLoaded', () => {
             allMeals.push({ ...r, mealType: 'diet', isDietFriendly: true, isDefault: true });
         });
 
-        // Add custom meals
+        // Add custom meals (legacy diet-friendly copies show once per group)
+        const shownGroups = new Set();
         getStore(STORE.customMeals).forEach(meal => {
-            // Avoid duplicates from diet-friendly meals (appear 3x)
-            if (meal.isDietFriendly) {
-                const baseId = meal.id.split('_')[0] + '_' + meal.id.split('_')[1];
-                if (!allMeals.find(m => m.id && m.id.startsWith(baseId))) {
-                    allMeals.push({ ...meal, mealType: 'diet' });
-                }
-            } else {
-                allMeals.push(meal);
-            }
+            const group = mealGroupId(meal.id);
+            if (shownGroups.has(group)) return;
+            shownGroups.add(group);
+            allMeals.push(meal.isDietFriendly ? { ...meal, mealType: 'diet' } : meal);
         });
 
         // Add custom recipes
@@ -806,12 +807,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const customMeals = getStore(STORE.customMeals);
         const customRecipes = getStore(STORE.customRecipes);
 
-        // Group meals by base ID to avoid showing diet-friendly 3x
+        // Group legacy diet-friendly copies so each shows once
         const mealGroups = new Map();
         customMeals.forEach(meal => {
-            const baseId = meal.isDietFriendly ? meal.id.split('_')[0] + '_' + meal.id.split('_')[1] : meal.id;
-            if (!mealGroups.has(baseId)) {
-                mealGroups.set(baseId, meal);
+            const group = mealGroupId(meal.id);
+            if (!mealGroups.has(group)) {
+                mealGroups.set(group, meal);
             }
         });
 
@@ -852,7 +853,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         card.querySelector('.edit-meal-btn').onclick = () => editMeal(meal);
-        card.querySelector('.delete-btn').onclick = () => deleteMeal(meal.id, meal.isDietFriendly);
+        card.querySelector('.delete-btn').onclick = () => deleteMeal(meal.id);
         return card;
     }
 
@@ -1020,25 +1021,14 @@ document.addEventListener('DOMContentLoaded', () => {
         setupAddModal();
     }
 
-    function deleteMeal(id, isDietFriendly) {
+    function deleteMeal(id) {
         if (!confirm('Are you sure you want to delete this meal?')) return;
 
-        const meals = getStore(STORE.customMeals);
-
-        if (isDietFriendly) {
-            // Delete all 3 instances
-            const baseId = id.split('_')[0] + '_' + id.split('_')[1];
-            const filtered = meals.filter(m => !m.id.startsWith(baseId));
-            setStore(STORE.customMeals, filtered);
-
-            // Delete from recipes too
-            const recipes = getStore(STORE.customRecipes);
-            const filteredRecipes = recipes.filter(r => !r.id.startsWith(baseId));
-            setStore(STORE.customRecipes, filteredRecipes);
-        } else {
-            const filtered = meals.filter(m => m.id !== id);
-            setStore(STORE.customMeals, filtered);
-        }
+        // Remove the meal's group: just this meal, or all copies of a legacy
+        // diet-friendly meal plus its recipe
+        const group = mealGroupId(id);
+        setStore(STORE.customMeals, getStore(STORE.customMeals).filter(m => mealGroupId(m.id) !== group));
+        setStore(STORE.customRecipes, getStore(STORE.customRecipes).filter(r => r.id !== group));
 
         initRecipes(); // Refresh recipes tab
         initManage(); // Refresh manage tab
@@ -1058,9 +1048,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // If diet-friendly, also delete from meals
         if (isDietFriendly) {
             const meals = getStore(STORE.customMeals);
-            const baseId = id.split('_')[0] + '_' + id.split('_')[1];
-            const filteredMeals = meals.filter(m => !m.id.startsWith(baseId));
-            setStore(STORE.customMeals, filteredMeals);
+            setStore(STORE.customMeals, meals.filter(m => mealGroupId(m.id) !== id));
             initPrepare();
         }
 
