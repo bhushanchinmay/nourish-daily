@@ -4,7 +4,7 @@
 
 A Progressive Web App for managing daily meals, recipes, and meal planning with time-based recommendations, customization, and offline support.
 
-![Version](https://img.shields.io/badge/version-1.6.6-green)
+![Version](https://img.shields.io/badge/version-1.6.7-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![PWA](https://img.shields.io/badge/installable-yes-purple)
 ![Tests](https://img.shields.io/badge/tests-90%25_coverage-brightgreen)
@@ -143,6 +143,10 @@ See [SECURITY.md](SECURITY.md) for details.
 ---
 
 ## 📜 Changelog
+
+### v1.6.7 (2026-09-26) - Prepare Checklist Resets Daily
+- 🐛 Night Tasks, Groceries and Custom Ingredients ticks no longer carry over (they were kept per weekday or forever)
+- 🔄 Every Prepare list starts fresh each day; old ticks are cleaned up so saved data stops growing
 
 ### v1.6.6 (2026-09-26) - Renamed Meals Update Everywhere
 - 🐛 Renaming a custom meal (or changing its description) now updates today's pick on the Today and Weekly tabs, immediately and after a reload

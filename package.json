@@ -1,8 +1,17 @@
 {
-    "version": "1.6.6",
+    "version": "1.6.7",
     "name": "Nourish Daily",
     "description": "Smart meal planning and nutrition tracking PWA with Ayurvedic principles",
     "changelog": {
+        "1.6.7": {
+            "type": "patch",
+            "fixes": [
+                "Prepare ticks are saved per local date (chk_<YYYY-MM-DD>_<item>), so every list resets daily",
+                "Night Tasks/Groceries were saved per weekday and reappeared ticked the next week; Custom Ingredients never reset",
+                "Ticks from earlier days and pre-1.6.7 keys are removed on load; today's Daily Essentials ticks carry over"
+            ],
+            "date": "2026-09-26"
+        },
         "1.6.6": {
             "type": "patch",
             "fixes": [
