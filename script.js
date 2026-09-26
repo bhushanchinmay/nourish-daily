@@ -22,6 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
         theme: 'nd_theme'
     };
 
+    // Prepare-tab ticks are saved per local date (chk_<YYYY-MM-DD>_<item>) so every list starts fresh each day
+    const pad2 = n => String(n).padStart(2, '0');
+    const CHECK_PREFIX = `chk_${today.getFullYear()}-${pad2(today.getMonth() + 1)}-${pad2(today.getDate())}_`;
+
     // Import validation (see IMPORT CLEANING)
     const MEAL_TYPES = ['breakfast', 'lunch', 'dinner'];
     const SAFE_ID = /^[\w-]{1,64}$/;
@@ -46,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ---------- INIT ----------
     localStorage.removeItem(STORE.used); // Legacy list that never reset (pre-v1.6.2)
+    pruneChecklist();
     repairStoredData();
     initTheme();
     initToday();
@@ -229,17 +234,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const tasksEl = document.getElementById('prep-tasks');
         tasksEl.innerHTML = '';
-        (data?.prep || []).forEach((txt, i) => tasksEl.appendChild(createCheckItem(`prep_${dayKey}_${i}`, txt)));
-        tasksEl.appendChild(createCheckItem(`prep_${dayKey}_alm`, 'Soak 6 Almonds + 1 Walnut'));
-        tasksEl.appendChild(createCheckItem(`prep_${dayKey}_met`, 'Soak Methi Seeds'));
+        (data?.prep || []).forEach((txt, i) => tasksEl.appendChild(createCheckItem(`${CHECK_PREFIX}prep_${i}`, txt)));
+        tasksEl.appendChild(createCheckItem(`${CHECK_PREFIX}prep_alm`, 'Soak 6 Almonds + 1 Walnut'));
+        tasksEl.appendChild(createCheckItem(`${CHECK_PREFIX}prep_met`, 'Soak Methi Seeds'));
 
         const grocEl = document.getElementById('prep-groceries');
         grocEl.innerHTML = '';
-        (data?.groceries || []).forEach((txt, i) => grocEl.appendChild(createCheckItem(`groc_${dayKey}_${i}`, `🛒 ${txt}`)));
+        (data?.groceries || []).forEach((txt, i) => grocEl.appendChild(createCheckItem(`${CHECK_PREFIX}groc_${i}`, `🛒 ${txt}`)));
 
         const essEl = document.getElementById('prep-essentials');
         essEl.innerHTML = '';
-        DAILY_ESSENTIALS.forEach((txt, i) => essEl.appendChild(createCheckItem(`ess_${today.toDateString()}_${i}`, txt)));
+        DAILY_ESSENTIALS.forEach((txt, i) => essEl.appendChild(createCheckItem(`${CHECK_PREFIX}ess_${i}`, txt)));
 
         loadCustomIngredients();
         loadCheckedStates();
@@ -273,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Capitalize first letter only
                 const displayIng = capitalizeFirst(ing);
                 const text = `${displayIng} (${titleList})`;
-                const id = `cing_${ing.replace(/\s/g, '_')}`;
+                const id = `${CHECK_PREFIX}cing_${ing.replace(/\s/g, '_')}`;
                 container.appendChild(createCheckItem(id, text));
             });
         } else {
@@ -296,6 +301,19 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem(id, div.classList.contains('done'));
         };
         return div;
+    }
+
+    // Drop ticks from earlier days, and the pre-v1.6.7 keys (prep_/groc_ per weekday and
+    // cing_ per ingredient never reset). Today's Daily Essentials ticks carry over.
+    function pruneChecklist() {
+        const legacyEssentials = `ess_${today.toDateString()}_`;
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith(legacyEssentials) && localStorage.getItem(key) === 'true') {
+                localStorage.setItem(`${CHECK_PREFIX}ess_${key.slice(legacyEssentials.length)}`, 'true');
+            }
+            const stale = key.startsWith('chk_') ? !key.startsWith(CHECK_PREFIX) : /^(prep|groc|ess|cing)_/.test(key);
+            if (stale) localStorage.removeItem(key);
+        });
     }
 
     function loadCheckedStates() {
