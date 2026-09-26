@@ -1,8 +1,16 @@
 {
-    "version": "1.6.5",
+    "version": "1.6.6",
     "name": "Nourish Daily",
     "description": "Smart meal planning and nutrition tracking PWA with Ayurvedic principles",
     "changelog": {
+        "1.6.6": {
+            "type": "patch",
+            "fixes": [
+                "Today and Weekly look up custom picks by id (resolveSelection) instead of showing the title/description copied when the pick was saved",
+                "Editing a meal refreshes the Today and Weekly tabs"
+            ],
+            "date": "2026-09-26"
+        },
         "1.6.5": {
             "type": "patch",
             "fixes": [
