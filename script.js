@@ -105,24 +105,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const defaults = MEAL_DATA[dayKey];
 
         // Use selection if valid, otherwise fall back to default
-        const bf = isValidSelection(custom.breakfast) ? custom.breakfast : defaults?.breakfast;
-        const ln = isValidSelection(custom.lunch) ? custom.lunch : defaults?.lunch;
-        const dn = isValidSelection(custom.dinner) ? custom.dinner : defaults?.dinner;
+        const bf = resolveSelection(custom.breakfast) || defaults?.breakfast;
+        const ln = resolveSelection(custom.lunch) || defaults?.lunch;
+        const dn = resolveSelection(custom.dinner) || defaults?.dinner;
 
         if (bf) updateMealCard('breakfast', bf);
         if (ln) updateMealCard('lunch', ln);
         if (dn) updateMealCard('dinner', dn);
     }
 
-    // A saved selection is valid if it's a default meal or a custom meal that still exists
-    function isValidSelection(meal) {
-        if (!meal || !meal.id) return false;
-        // Default meals (from MEAL_DATA) are always valid
+    // Turn a saved selection into what to display, or null if it's no longer valid.
+    // Default meals never change, so their saved copy is used. Custom meals are looked
+    // up by id so edits (e.g. a rename) show up, and deleted ones return null.
+    // Returns plain text, for textContent / sanitize().
+    function resolveSelection(meal) {
+        if (!meal || !meal.id) return null;
         if (!meal.id.startsWith('cm_') && !meal.id.startsWith('df_') && !meal.id.startsWith('imported_')) {
-            return true;
+            return meal;
         }
-        // Custom meals need to exist in customMeals store
-        return getStore(STORE.customMeals).some(m => m.id === meal.id);
+        const current = getStore(STORE.customMeals).find(m => m.id === meal.id);
+        if (!current) return null;
+        return { id: current.id, title: unsanitize(current.title), desc: unsanitize(current.desc) };
     }
 
     // Diet-friendly meals saved before v1.6.0 were stored once per meal type
@@ -195,9 +198,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const todayKey = today.toDateString();
                 const custom = selections[todayKey];
                 if (custom) {
-                    if (isValidSelection(custom.breakfast)) breakfast = custom.breakfast;
-                    if (isValidSelection(custom.lunch)) lunch = custom.lunch;
-                    if (isValidSelection(custom.dinner)) dinner = custom.dinner;
+                    breakfast = resolveSelection(custom.breakfast) || breakfast;
+                    lunch = resolveSelection(custom.lunch) || lunch;
+                    dinner = resolveSelection(custom.dinner) || dinner;
                 }
             }
 
@@ -984,6 +987,8 @@ document.addEventListener('DOMContentLoaded', () => {
         initManage();
         initPrepare();
         initRecipes();
+        loadMeals(); // Today and Weekly show the edited name
+        initWeekly();
         document.getElementById('add-modal').classList.add('hidden');
         alert('✅ Meal updated successfully!');
 
